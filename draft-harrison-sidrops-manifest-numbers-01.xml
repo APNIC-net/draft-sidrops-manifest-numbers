@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
+<!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
+<!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
+<!ENTITY RFC6481 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6481.xml">
+<!ENTITY RFC6488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6488.xml">
+<!ENTITY RFC6489 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6489.xml">
+<!ENTITY RFC7942 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7942.xml">
+<!ENTITY RFC8630 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8630.xml">
+<!ENTITY RFC9286 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9286.xml">
+
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<rfc category="std"
+docName="draft-harrison-sidrops-manifest-numbers-01" ipr="trust200902" updates="RFC9286">
+
+  <front>
+    <title>RPKI Manifest Number Handling</title>
+
+    <author initials="T." surname="Harrison" fullname="Tom Harrison">
+        <organization abbrev="APNIC">Asia Pacific Network Information Centre</organization>
+        <address>
+            <postal>
+                <street>6 Cordelia St</street>
+                <city>South Brisbane</city>
+                <code>4101</code>
+                <country>Australia</country>
+                <region>QLD</region>
+            </postal>
+            <email>tomh@apnic.net</email>
+        </address>
+    </author>
+
+    <author fullname="George G. Michaelson" initials="G." surname="Michaelson">
+	<organization abbrev="APNIC">Asia-Pacific Network Information Centre</organization>
+
+	<address>
+	    <postal>
+		<street>6 Cordelia St</street>
+		<city>South Brisbane</city>
+		<region>QLD</region>
+		<code>4101</code>
+		<country>Australia</country>
+	    </postal>
+	    <email>ggm@apnic.net</email>
+	</address>
+    </author>
+
+    <date day="5" month="February" year="2024" />
+
+    <area>General</area>
+    <workgroup>Internet Engineering Task Force</workgroup>
+    <keyword>template</keyword>
+    <abstract>
+        <t>
+
+            The Resource Public Key Infrastructure (RPKI) makes use of
+            signed objects called manifests.  A manifest lists each
+            file that a publisher intends to include within an RPKI
+            repository, and can be used to detect certain forms of
+            attack against a repository.  Manifests include a
+            "manifest number" (manifestNumber), which the publisher
+            must increment whenever it issues a new manifest, and
+            Relying Parties (RPs) are required to verify that a
+            newly-retrieved manifest for a given Certification
+            Authority (CA) has a higher manifestNumber than the
+            previously-validated manifest.  However, the
+            manifestNumber field is 20 octets in length (i.e. not
+            unbounded), and no behaviour is specified for when a
+            manifestNumber reaches the largest possible value.  This
+            document specifies publisher and RP behaviour for this
+            scenario.
+
+        </t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+        <t>
+
+            The Resource Public Key Infrastructure (RPKI) <xref
+            target="RFC6480" /> makes use of signed objects <xref
+            target="RFC6488" /> called manifests <xref
+            target="RFC9286" />.  A manifest lists each file that a
+            publisher intends to include within an RPKI repository
+            <xref target="RFC6481" />, and can be used to detect
+            certain forms of attack against a repository.  Manifests
+            include a "manifest number" (manifestNumber), which the
+            publisher must increment whenever it issues a new
+            manifest, and Relying Parties (RPs) are required to verify
+            that a newly-retrieved manifest for a given Certification
+            Authority (CA) has a higher manifestNumber than the
+            previously-validated manifest (see section 4.2.1 of <xref
+            target="RFC9286" />).
+
+        </t>
+
+        <t>
+
+            However, the manifestNumber field is 20 octets in length
+            (i.e. not unbounded), and no behaviour is specified for
+            when a manifestNumber reaches the largest possible value,
+            which means that a publisher can no longer make use of a
+            given CA certificate when that value is reached.  (For the
+            purposes of <xref target="RFC9286" />, a "CA" is
+            represented by a CA certificate with a stable location and
+            a stable private key.  Reissuing a CA certificate with
+            changed resources or a changed expiry date does not change
+            the identity of the CA such that the stored manifestNumber
+            for the CA is reset, for example.)
+
+        </t>
+
+        <t>
+
+            While it is practically impossible for a publisher to
+            reach the largest possible value under normal operating
+            conditions (it would require that the publisher issue one
+            manifest per second for 46,343,912,903,694,283,301,740
+            quintillion years), there is a chance that it could be
+            reached due to bugs in the issuance or publication systems
+            or incorrect/inadvertent use of those systems.  For
+            example:
+
+            occur:
+
+            <list>
+
+                <t>Incrementing by large values when issuing
+                manifests, such that the time to reach that largest
+                value is reduced.</t>
+
+                <t>Reissuing new manifests in an infinite delay-free
+                loop, such that the manifestNumber increases by a
+                large value in a comparatively short period of
+                time.</t>
+
+                <t>Inadvertently setting the manifestNumber to the
+                largest possible value, such that the publisher will
+                no longer be able to publish usable manifests for that
+                repository.</t>
+
+            </list>
+
+            These scenarios might also arise in combination and be
+            more severe as a result: for example, a large manifest
+            number increment bug in conjunction with a manifest
+            reissuance loop problem.
+
+        </t>
+
+        <t>
+
+            For a subordinate CA, the risks associated with repository
+            invalidation due to this problem are low, since the
+            publisher can simply use the key rollover process (<xref
+            target="RFC6489" />) to get a new Certification Authority
+            (CA) certificate.  RPs will treat this new certificate as
+            though it represents a distinct CA, and the manifestNumber
+            can be reset at that point.
+
+        </t>
+
+        <t>
+
+            However, this option is not available for RPKI Trust
+            Anchors (TAs).  If a TA publishes a manifest with the
+            largest-possible manifestNumber value, then it is not
+            possible to make use of the TA after that point, because
+            the certificate location (stored in the associated Trust
+            Anchor Locator (TAL) <xref target="RFC8630" />) and its
+            private key cannot be changed.  Issuing a new TA and
+            distributing the associated TAL to clients would involve a
+            large amount of work for TA operators and RPs, and there
+            would be a limited degree of RPKI protection by way of
+            that TA for the time between the issuance of the
+            problematic manifest and the installation of the new TAL
+            for a given client.
+
+        </t>
+
+        <t>
+
+            In order to avoid these problems, this document defines
+            how publishers and RPs can handle this scenario in order
+            to facilitate ongoing use of an affected repository.
+
+        </t>
+
+      <section title="Requirements Language">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+        document are to be interpreted as described in <xref
+        target="RFC2119" /> <xref target="RFC8174"/>.</t>
+      </section>
+    </section>
+
+    <section anchor="manifest-number-handling" title="Manifest Number Handling">
+
+        <t>
+
+            For a given CA, an RP MUST NOT reject a new manifest
+            issued by that CA on the grounds of it not having a higher
+            manifestNumber than a previously validated manifest if the
+            new manifest has a different filename from that of the
+            previously validated manifest.  In other words, an RP MUST
+            reset its stored manifestNumber for a given CA if the CA
+            changes the filename of its manifest.
+
+        </t>
+
+        <t>
+
+            With this behaviour, it is possible for a CA to be
+            configured such that any time it issues a new manifest, it
+            uses a new filename for that manifest.  If a CA were
+            configured in this way, the manifestNumber validation set
+            out in section 4.2.1 of <xref target="RFC9286" /> would
+            have no purpose.  To avoid this outcome, CAs SHOULD NOT
+            use new filenames for manifests except in situations where
+            it is necessary to ensure the ongoing validity of the CA
+            or its repository.  Similarly, RP software SHOULD alert
+            its operators when a manifest filename changes for a given
+            CA.
+
+        </t>
+
+    </section>
+
+    <section title="Operational Considerations">
+
+        <t>
+
+            CA software may opt to support this functionality in
+            various ways.  For example, it could change the manifest
+            filename when the manifestNumber reaches a certain
+            threshold, or it could alert the operator in this scenario
+            and request confirmation that the filename should be
+            changed.
+
+        </t>
+
+    </section>
+
+    <section anchor="IANA" title="IANA Considerations">
+        <t>
+
+            N/A
+
+        </t>
+    </section>
+
+    <section removeInRFC="true">
+      <name>Implementation status</name>
+      <t>
+        This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in <xref target="RFC7942" />.
+        The description of implementations in this section is intended to assist the IETF in its decision processes in progressing drafts to RFCs.
+        Please note that the listing of any individual implementation here does not imply endorsement by the IETF.
+        Furthermore, no effort has been spent to verify the information presented here that was supplied by IETF contributors.
+        This is not intended as, and must not be construed to be, a catalog of available implementations or their features.
+        Readers are advised to note that other implementations may exist.
+      </t>
+      <t>
+        According to <xref target="RFC7942" />, "this will allow reviewers and working groups to assign due consideration to documents that have the benefit of running code, which may serve as evidence of valuable experimentation and feedback that have made the implemented protocols more mature.
+        It is up to the individual working groups to use this information as they see fit".
+      </t>
+
+      <ul>
+        <li>
+          OpenBSD <xref target="rpki-client"/>
+        </li>
+      </ul>
+    </section>
+
+    <section anchor="Acknowledgements" title="Acknowledgements">
+        <t>
+
+            The authors wish to thank Job Snijders for document review
+            and associated comments.
+
+        </t>
+    </section>
+
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+      &RFC8174;
+      &RFC9286;
+    </references>
+
+    <references title="Informative References">
+      &RFC1982;
+      &RFC6480;
+      &RFC6481;
+      &RFC6488;
+      &RFC6489;
+      &RFC7942;
+      &RFC8630;
+      <reference anchor="rpki-client" target="https://www.rpki-client.org/">
+        <front>
+          <title>rpki-client</title>                                                                                                                                  <author initials="" surname="">
+            <organization>OpenBSD Project</organization>
+          </author>
+          <date month="" year="" />
+        </front>
+      </reference>
+    </references>
+
+    <section title="Serial Number Arithmetic">
+  
+        <t>
+  
+            Serial number arithmetic <xref target="RFC1982" /> is an
+            approach that has been used in the DNS context (among
+            others) to permit the indefinite use of a finite number
+            space.  At least in theory, it would be possible to use a
+            similar approach with the manifestNumber field as well.
+  
+        </t>
+  
+        <t>
+  
+            However, unlike the corresponding DNS context with SOA
+            resource records, an RPKI CA does not have visibility into
+            or control over RPKI RPs generally.  This means that it is
+            not possible to select updated manifestNumber values or to
+            manage the relevant state transitions so as to
+            definitively ensure that all RPs will have valid state at
+            the end of the process.  The approach proposed in <xref
+            target="manifest-number-handling" /> does not have this problem.
+  
+        </t>
+  
+    </section>
+
+  </back>
+</rfc>
