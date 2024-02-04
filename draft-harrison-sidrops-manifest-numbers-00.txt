@@ -1,0 +1,336 @@
+
+
+
+
+Internet Engineering Task Force                              T. Harrison
+Internet-Draft                                             G. Michaelson
+Updates: RFC9286 (if approved)                                     APNIC
+Intended status: Standards Track                         30 January 2024
+Expires: 2 August 2024
+
+
+                     RPKI Manifest Number Handling
+               draft-harrison-sidrops-manifest-numbers-00
+
+Abstract
+
+   The Resource Public Key Infrastructure (RPKI) makes use of signed
+   objects called manifests.  A manifest lists each file that a
+   publisher intends to include within an RPKI repository, and can be
+   used to detect certain forms of attack against a repository.
+   Manifests include a "manifest number" (manifestNumber), which the
+   publisher must increment whenever it issues a new manifest, and
+   Relying Parties (RPs) are required to verify that a newly-retrieved
+   manifest for a given Certification Authority (CA) has a higher
+   manifestNumber than the previously-validated manifest.  However, the
+   manifestNumber field is 20 octets in length (i.e. not unbounded), and
+   no behaviour is specified for when a manifestNumber reaches the
+   largest possible value.  This document specifies publisher and RP
+   behaviour for this scenario.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 2 August 2024.
+
+Copyright Notice
+
+   Copyright (c) 2024 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+
+
+
+Harrison & Michaelson     Expires 2 August 2024                 [Page 1]
+
+Internet-Draft        RPKI Manifest Number Handling         January 2024
+
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   4
+   2.  Manifest Number Handling  . . . . . . . . . . . . . . . . . .   4
+   3.  Serial Number Arithmetic  . . . . . . . . . . . . . . . . . .   4
+   4.  Operational Considerations  . . . . . . . . . . . . . . . . .   4
+   5.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
+   6.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   5
+   7.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   5
+     7.1.  Normative References  . . . . . . . . . . . . . . . . . .   5
+     7.2.  Informative References  . . . . . . . . . . . . . . . . .   5
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   6
+
+1.  Introduction
+
+   The Resource Public Key Infrastructure (RPKI) [RFC6480] makes use of
+   signed objects [RFC6488] called manifests [RFC9286].  A manifest
+   lists each file that a publisher intends to include within an RPKI
+   repository [RFC6481], and can be used to detect certain forms of
+   attack against a repository.  Manifests include a "manifest number"
+   (manifestNumber), which the publisher must increment whenever it
+   issues a new manifest, and Relying Parties (RPs) are required to
+   verify that a newly-retrieved manifest for a given Certification
+   Authority (CA) has a higher manifestNumber than the previously-
+   validated manifest (see section 4.2.1 of [RFC9286]).
+
+   However, the manifestNumber field is 20 octets in length (i.e. not
+   unbounded), and no behaviour is specified for when a manifestNumber
+   reaches the largest possible value, which means that a publisher can
+   no longer make use of a given CA certificate when that value is
+   reached.  (For the purposes of [RFC9286], a "CA" is represented by a
+   CA certificate with a stable location and a stable private key.
+   Reissuing a CA certificate with changed resources or a changed expiry
+   date does not change the identity of the CA such that the stored
+   manifestNumber for the CA is reset, for example.)
+
+
+
+
+
+
+Harrison & Michaelson     Expires 2 August 2024                 [Page 2]
+
+Internet-Draft        RPKI Manifest Number Handling         January 2024
+
+
+   While it is practically impossible for a publisher to reach the
+   largest possible value under normal operating conditions (it would
+   require that the publisher issue one manifest per second for
+   46,343,912,903,694,283,301,740 quintillion years), there are
+   scenarios in which it might occur:
+
+      Bugs in the issuance/publication logic: e.g.  incrementing by
+      large values when issuing manifests, such that the time to reach
+      that largest value is reduced.
+
+      Incorrect/inadvertent use of the issuance/publication system: e.g.
+      reissuing new manifests in an infinite delay-free loop, such that
+      the manifestNumber increases by a large value in a comparatively
+      short period of time.
+
+      Attacks: if an attacker gains access to an RPKI system and is able
+      to issue a manifest with a specific manifestNumber, then the
+      attacker can set that manifestNumber to the largest possible
+      value, and the publisher will no longer be able to publish usable
+      manifests for that repository.
+
+   These scenarios might also arise in combination and be more severe as
+   a result: for example, a large manifest number increment bug in
+   conjunction with a manifest reissuance loop problem.
+
+   For a subordinate CA, the risks associated with repository
+   invalidation due to this problem are low, since the publisher can
+   simply use the key rollover process ([RFC6489]) to get a new
+   Certification Authority (CA) certificate.  RPs will treat this new
+   certificate as though it represents a distinct CA, and the
+   manifestNumber can be reset at that point.
+
+   However, this option is not available for RPKI Trust Anchors (TAs).
+   If a TA publishes a manifest with the largest-possible manifestNumber
+   value, then it is not possible to make use of the TA after that
+   point, because the certificate location (stored in the associated
+   Trust Anchor Locator (TAL) [RFC8630]) and its private key cannot be
+   changed.  Issuing a new TA and distributing the associated TAL to
+   clients would involve a large amount of work for TA operators and
+   RPs, and there would be a limited degree of RPKI protection by way of
+   that TA for the time between the issuance of the problematic manifest
+   and the installation of the new TAL for a given client.
+
+   In order to avoid these problems, this document defines how
+   publishers and RPs can handle this scenario in order to facilitate
+   ongoing use of an affected repository.
+
+
+
+
+
+Harrison & Michaelson     Expires 2 August 2024                 [Page 3]
+
+Internet-Draft        RPKI Manifest Number Handling         January 2024
+
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [RFC2119] [RFC8174].
+
+2.  Manifest Number Handling
+
+   For a given CA, an RP MUST NOT reject a new manifest issued by that
+   CA on the grounds of it not having a higher manifestNumber than a
+   previously validated manifest if the new manifest has a different
+   filename from that of the previously validated manifest.  In other
+   words, an RP MUST reset its stored manifestNumber for a given CA if
+   the CA changes the filename of its manifest.
+
+   With this behaviour, it is possible for a CA to be configured such
+   that any time it issues a new manifest, it uses a new filename for
+   that manifest.  If a CA were configured in this way, the
+   manifestNumber validation set out in section 4.2.1 of [RFC9286] would
+   have no purpose.  To avoid this outcome, CAs SHOULD NOT use new
+   filenames for manifests except in situations where it is necessary to
+   ensure the ongoing validity of the CA or its repository.  Similarly,
+   RP software SHOULD alert its operators when a manifest filename
+   changes for a given CA.
+
+3.  Serial Number Arithmetic
+
+   Serial number arithmetic [RFC1982] is an approach that has been used
+   in the DNS context (among others) to permit the indefinite use of a
+   finite number space.  At least in theory, it would be possible to use
+   a similar approach with the manifestNumber field as well.
+
+   However, unlike the corresponding DNS context with SOA resource
+   records, an RPKI CA does not have visibility into or control over
+   RPKI RPs generally.  This means that it is not possible to select
+   updated manifestNumber values or to manage the relevant state
+   transitions so as to definitively ensure that all RPs will have valid
+   state at the end of the process.  The approach proposed in the
+   previous section does not have this problem.
+
+4.  Operational Considerations
+
+   CA software may opt to support this functionality in various ways.
+   For example, it could change the manifest filename when the
+   manifestNumber reaches a certain threshold, or it could alert the
+   operator in this scenario and request confirmation that the filename
+   should be changed.
+
+
+
+
+Harrison & Michaelson     Expires 2 August 2024                 [Page 4]
+
+Internet-Draft        RPKI Manifest Number Handling         January 2024
+
+
+5.  IANA Considerations
+
+   N/A
+
+6.  Acknowledgements
+
+   N/A
+
+7.  References
+
+7.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC9286]  Austein, R., Huston, G., Kent, S., and M. Lepinski,
+              "Manifests for the Resource Public Key Infrastructure
+              (RPKI)", RFC 9286, DOI 10.17487/RFC9286, June 2022,
+              <https://www.rfc-editor.org/info/rfc9286>.
+
+7.2.  Informative References
+
+   [RFC1982]  Elz, R. and R. Bush, "Serial Number Arithmetic", RFC 1982,
+              DOI 10.17487/RFC1982, August 1996,
+              <https://www.rfc-editor.org/info/rfc1982>.
+
+   [RFC6480]  Lepinski, M. and S. Kent, "An Infrastructure to Support
+              Secure Internet Routing", RFC 6480, DOI 10.17487/RFC6480,
+              February 2012, <https://www.rfc-editor.org/info/rfc6480>.
+
+   [RFC6481]  Huston, G., Loomans, R., and G. Michaelson, "A Profile for
+              Resource Certificate Repository Structure", RFC 6481,
+              DOI 10.17487/RFC6481, February 2012,
+              <https://www.rfc-editor.org/info/rfc6481>.
+
+   [RFC6488]  Lepinski, M., Chi, A., and S. Kent, "Signed Object
+              Template for the Resource Public Key Infrastructure
+              (RPKI)", RFC 6488, DOI 10.17487/RFC6488, February 2012,
+              <https://www.rfc-editor.org/info/rfc6488>.
+
+
+
+
+
+
+Harrison & Michaelson     Expires 2 August 2024                 [Page 5]
+
+Internet-Draft        RPKI Manifest Number Handling         January 2024
+
+
+   [RFC6489]  Huston, G., Michaelson, G., and S. Kent, "Certification
+              Authority (CA) Key Rollover in the Resource Public Key
+              Infrastructure (RPKI)", BCP 174, RFC 6489,
+              DOI 10.17487/RFC6489, February 2012,
+              <https://www.rfc-editor.org/info/rfc6489>.
+
+   [RFC8630]  Huston, G., Weiler, S., Michaelson, G., Kent, S., and T.
+              Bruijnzeels, "Resource Public Key Infrastructure (RPKI)
+              Trust Anchor Locator", RFC 8630, DOI 10.17487/RFC8630,
+              August 2019, <https://www.rfc-editor.org/info/rfc8630>.
+
+Authors' Addresses
+
+   Tom Harrison
+   Asia Pacific Network Information Centre
+   6 Cordelia St
+   South Brisbane QLD 4101
+   Australia
+   Email: tomh@apnic.net
+
+
+   George G. Michaelson
+   Asia-Pacific Network Information Centre
+   6 Cordelia St
+   South Brisbane QLD 4101
+   Australia
+   Email: ggm@apnic.net
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Harrison & Michaelson     Expires 2 August 2024                 [Page 6]
