@@ -310,28 +310,29 @@ docName="draft-harrison-sidrops-manifest-numbers-01" ipr="trust200902" updates="
       &RFC8630;
       <reference anchor="rpki-client" target="https://www.rpki-client.org/">
         <front>
-          <title>rpki-client</title>                                                                                                                                  <author initials="" surname="">
+          <title>rpki-client</title>
+            <author>
             <organization>OpenBSD Project</organization>
           </author>
-          <date month="" year="" />
+          <date month="January" year="2024" />
         </front>
       </reference>
     </references>
 
     <section title="Serial Number Arithmetic">
-  
+
         <t>
-  
+
             Serial number arithmetic <xref target="RFC1982" /> is an
             approach that has been used in the DNS context (among
             others) to permit the indefinite use of a finite number
             space.  At least in theory, it would be possible to use a
             similar approach with the manifestNumber field as well.
-  
+
         </t>
-  
+
         <t>
-  
+
             However, unlike the corresponding DNS context with SOA
             resource records, an RPKI CA does not have visibility into
             or control over RPKI RPs generally.  This means that it is
@@ -340,9 +341,9 @@ docName="draft-harrison-sidrops-manifest-numbers-01" ipr="trust200902" updates="
             definitively ensure that all RPs will have valid state at
             the end of the process.  The approach proposed in <xref
             target="manifest-number-handling" /> does not have this problem.
-  
+
         </t>
-  
+
     </section>
 
   </back>
