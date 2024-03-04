@@ -427,7 +427,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
        </t>
        <ol>
          <li>Can the file be opened?</li>
-         <li>Can the content of the file be DER-decoded</li>
+         <li>Can the content of the file be decoded as DER?</li>
          <li>Can the DER-content be parsed as CMS ContentInfo?</li>
          <li>Is the CMS self-signage correct?</li>
          <li>Can exactly one CMS SignerInfo be extracted?</li>
