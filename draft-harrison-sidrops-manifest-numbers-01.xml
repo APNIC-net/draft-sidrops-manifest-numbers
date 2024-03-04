@@ -70,7 +70,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 	</address>
     </author>
 
-    <date day="5" month="February" year="2024" />
+    <date day="4" month="March" year="2024" />
 
     <area>General</area>
     <workgroup>Internet Engineering Task Force</workgroup>
@@ -176,9 +176,9 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-            For a subordinate CA, the risks associated with repository
-            invalidation due to this problem are low, since the
-            publisher can simply use the key rollover process (<xref
+            For a subordinate CA, the risk of repository invalidation
+            due to this problem can be addressed by the publisher
+            simply using the key rollover process (<xref
             target="RFC6489" />) to get a new Certification Authority
             (CA) certificate.  RPs will treat this new certificate as
             though it represents a distinct CA, and the manifestNumber
@@ -252,7 +252,8 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-	   Note that this approach is different than what's described in <xref target="RFC8488" section="3.2.1"/>.
+           Note that this approach is different from that described
+           in <xref target="RFC8488" section="3.2.1"/>.
 
         </t>
 
@@ -305,10 +306,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
     <section anchor="Acknowledgements" title="Acknowledgements">
         <t>
-
-            The authors wish to thank Job Snijders for document review
-            and associated comments.
-
+            N/A
         </t>
     </section>
 
