@@ -252,11 +252,12 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-            To avoid certain forms of replay attacks, the RP MUST verify
-            that the URI in the accessLocation in the id-ad-signedObject
-            accessMethod in the Manifest's Subject Information Access
-            exactly matches the URI presented in the RRDP publish
-            element or the path presented by remote rsync servers.
+            To avoid certain forms of replay attacks, the RP MUST
+            verify that the URI in the accessLocation in one of the
+            id-ad-signedObject accessMethods in the Manifest's Subject
+            Information Access exactly matches the URI presented in the
+            RRDP publish element or the path presented by remote rsync
+            servers.
 
         </t>
 
