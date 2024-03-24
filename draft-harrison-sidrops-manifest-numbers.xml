@@ -124,15 +124,15 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
             However, the manifestNumber field is 20 octets in length
             (i.e. not unbounded), and no behaviour is specified for
-            when a manifestNumber reaches the largest possible value,
-            which means that a publisher can no longer make use of a
-            given CA certificate when that value is reached.  (For the
-            purposes of <xref target="RFC9286" />, a "CA" is
-            represented by a CA certificate with a stable location and
-            a stable private key.  Reissuing a CA certificate with
-            changed resources or a changed expiry date does not change
-            the identity of the CA such that the stored manifestNumber
-            for the CA is reset, for example.)
+            when a manifestNumber reaches the largest possible value
+            (2^159-1), which means that a publisher can no longer make
+            use of a given CA certificate when that value is reached.
+            (For the purposes of <xref target="RFC9286" />, a "CA" is
+            represented by a CA certificate with a stable location and a
+            stable private key. Reissuing a CA certificate with changed
+            resources or a changed expiry date does not change the
+            identity of the CA such that the stored manifestNumber for
+            the CA is reset, for example.)
 
         </t>
 
