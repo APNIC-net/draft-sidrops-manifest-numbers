@@ -22,7 +22,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
 <rfc category="std"
-docName="draft-harrison-sidrops-manifest-numbers-01"
+docName="draft-harrison-sidrops-manifest-numbers-02"
 ipr="trust200902" updates="RFC9286" consensus="true">
 
   <front>
@@ -124,15 +124,15 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
             However, the manifestNumber field is 20 octets in length
             (i.e. not unbounded), and no behaviour is specified for
-            when a manifestNumber reaches the largest possible value,
-            which means that a publisher can no longer make use of a
-            given CA certificate when that value is reached.  (For the
-            purposes of <xref target="RFC9286" />, a "CA" is
-            represented by a CA certificate with a stable location and
-            a stable private key.  Reissuing a CA certificate with
-            changed resources or a changed expiry date does not change
-            the identity of the CA such that the stored manifestNumber
-            for the CA is reset, for example.)
+            when a manifestNumber reaches the largest possible value
+            (2^159-1), which means that a publisher can no longer make
+            use of a given CA certificate when that value is reached.
+            (For the purposes of <xref target="RFC9286" />, a "CA" is
+            represented by a CA certificate with a stable location and a
+            stable private key. Reissuing a CA certificate with changed
+            resources or a changed expiry date does not change the
+            identity of the CA such that the stored manifestNumber for
+            the CA is reset, for example.)
 
         </t>
 
@@ -247,6 +247,17 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             or its repository.  Similarly, RP software SHOULD alert
             its operators when a manifest filename changes for a given
             CA.
+
+        </t>
+
+        <t>
+
+            To avoid certain forms of replay attacks, the RP MUST
+            verify that the URI in the accessLocation in one of the
+            id-ad-signedObject accessMethods in the Manifest's Subject
+            Information Access exactly matches the URI presented in the
+            RRDP publish element or the path presented by remote rsync
+            servers.
 
         </t>
 
@@ -445,6 +456,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
          <li>Can the AIA be extracted from the X.509 EE?</li>
          <li>Can the AKI be extracted from the X.509 EE?</li>
          <li>Can the SIA be extracted from the X.509 EE?</li>
+         <li>Does the SIA Signed Object pathname match the pathname presented by the publication point?</li>
          <li>Can the SKI be extracted from the X.509 EE?</li>
          <li>Are the X509 EE's RFC 3779 extensions set to inherit?</li>
          <li>Can the eContent be parsed according to the ASN.1 formal syntax?</li>
