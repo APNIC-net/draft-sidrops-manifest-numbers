@@ -3,11 +3,14 @@
 <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
 <!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
+<!ENTITY RFC4387 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4387.xml">
+<!ENTITY RFC5280 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5280.xml">
 <!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
 <!ENTITY RFC6481 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6481.xml">
-<!ENTITY RFC6488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6488.xml">
+<!ENTITY RFC6487 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6487.xml">
 <!ENTITY RFC6489 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6489.xml">
 <!ENTITY RFC7942 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7942.xml">
+<!ENTITY RFC8182 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8182.xml">
 <!ENTITY RFC8630 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8630.xml">
 <!ENTITY RFC8488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8488.xml">
 <!ENTITY RFC9286 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9286.xml">
@@ -26,7 +29,7 @@ docName="draft-harrison-sidrops-manifest-numbers-02"
 ipr="trust200902" updates="RFC9286" consensus="true">
 
   <front>
-    <title>RPKI Manifest Number Handling</title>
+    <title>RPKI Repository Handling Updates</title>
 
     <author initials="T." surname="Harrison" fullname="Tom Harrison">
         <organization abbrev="APNIC">Asia Pacific Network Information Centre</organization>
@@ -70,7 +73,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 	</address>
     </author>
 
-    <date day="4" month="March" year="2024" />
+    <date day="2" month="April" year="2024" />
 
     <area>General</area>
     <workgroup>Internet Engineering Task Force</workgroup>
@@ -79,21 +82,17 @@ ipr="trust200902" updates="RFC9286" consensus="true">
         <t>
 
             The Resource Public Key Infrastructure (RPKI) makes use of
-            signed objects called manifests.  A manifest lists each
-            file that a publisher intends to include within an RPKI
-            repository, and can be used to detect certain forms of
-            attack against a repository.  Manifests include a
-            "manifest number" (manifestNumber), which the publisher
-            must increment whenever it issues a new manifest, and
-            Relying Parties (RPs) are required to verify that a
-            newly-retrieved manifest for a given Certification
-            Authority (CA) has a higher manifestNumber than the
-            previously-validated manifest.  However, the
-            manifestNumber field is 20 octets in length (i.e. not
-            unbounded), and no behaviour is specified for when a
-            manifestNumber reaches the largest possible value.  This
-            document specifies publisher and RP behaviour for this
-            scenario.
+            repositories for the publication of certificates and other
+            objects.  At a minimum, each repository contains a
+            Certificate Revocation List (CRL) for the publishing
+            Certification Authority (CA), as well as a signed object
+            called a manifest that lists each file that a publisher
+            intends to include within the repository.  In certain
+            scenarios, the CRL and/or the manifest may contain data
+            that leads Relying Parties (RPs) to treat the repository
+            as being permanently unusable.  This document updates the
+            previous requirements in this space such that CAs are able
+            to recover from these scenarios.
 
         </t>
     </abstract>
@@ -104,19 +103,29 @@ ipr="trust200902" updates="RFC9286" consensus="true">
         <t>
 
             The Resource Public Key Infrastructure (RPKI) <xref
-            target="RFC6480" /> makes use of signed objects <xref
-            target="RFC6488" /> called manifests <xref
-            target="RFC9286" />.  A manifest lists each file that a
-            publisher intends to include within an RPKI repository
-            <xref target="RFC6481" />, and can be used to detect
-            certain forms of attack against a repository.  Manifests
-            include a "manifest number" (manifestNumber), which the
-            publisher must increment whenever it issues a new
-            manifest, and Relying Parties (RPs) are required to verify
-            that a newly-retrieved manifest for a given Certification
-            Authority (CA) has a higher manifestNumber than the
-            previously-validated manifest (see section 4.2.1 of <xref
-            target="RFC9286" />).
+            target="RFC6480" /> makes use of repositories <xref
+            target="RFC6481" /> for the publication of certificates
+            and other objects.  At a minimum, each repository contains
+            a Certificate Revocation List (CRL) <xref target="RFC6487"
+            /> for the publishing Certification Authority (CA), as
+            well as a signed object called a manifest <xref
+            target="RFC9286" /> that lists each file that a publisher
+            intends to include within the repository.  In certain
+            scenarios, the CRL and/or the manifest may contain data
+            that leads clients to treat the repository as being
+            permanently unusable.
+
+        </t>
+
+        <t>
+
+            For example, manifests include a "manifest number"
+            (manifestNumber), which the publisher must increment
+            whenever it issues a new manifest, and Relying Parties
+            (RPs) are required to verify that a newly-retrieved
+            manifest for a given Certification Authority (CA) has a
+            higher manifestNumber than the previously-validated
+            manifest (see section 4.2.1 of <xref target="RFC9286" />).
 
         </t>
 
@@ -226,9 +235,9 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
             For a given CA, an RP MUST NOT reject a new manifest
             issued by that CA on the grounds of it not having a higher
-            manifestNumber than a previously validated manifest if the
+            manifestNumber than a previously-validated manifest if the
             new manifest has a different filename from that of the
-            previously validated manifest.  In other words, an RP MUST
+            previously-validated manifest.  In other words, an RP MUST
             reset its stored manifestNumber for a given CA if the CA
             changes the filename of its manifest.
 
@@ -252,19 +261,99 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-            To avoid certain forms of replay attacks, the RP MUST
+            To avoid certain forms of replay attack, the RP MUST
             verify that the URI in the accessLocation in one of the
-            id-ad-signedObject accessMethods in the Manifest's Subject
-            Information Access exactly matches the URI presented in the
-            RRDP publish element or the path presented by remote rsync
-            servers.
+            id-ad-signedObject accessMethods in the manifest's Subject
+            Information (SIA) extension exactly matches the URI
+            presented in the RPKI Repository Delta Protocol (RRDP)
+            <xref target="RFC8182" /> "publish" element or the path
+            presented by remote rsync servers.
 
         </t>
 
         <t>
 
-           Note that this approach is different from that described
-           in <xref target="RFC8488" section="3.2.1"/>.
+            Section 2.2 of <xref target="RFC6481" /> contains
+            non-normative guidance for the naming of manifest files in
+            repositories.  While a CA that supports the behaviour described
+            in this section cannot preserve the exact filename
+            suggested by that text (per section 2.1 of <xref
+            target="RFC4387" />), the CA SHOULD still ensure that the
+            filename is a value derived from the public key of the CA,
+            per the more general guidance in that section.
+
+        </t>
+
+        <t>
+
+            Note that the approach set out in this section is
+            different from that described in <xref target="RFC8488"
+            section="3.2.1"/>.
+
+        </t>
+
+    </section>
+
+    <section anchor="crl-number-handling" title="CRL Number Handling">
+
+        <t>
+
+            Section 5 of <xref target="RFC6487" /> states that "[w]here
+            two or more CRLs are issued by the same CA, the CRL with
+            the highest value of the 'CRL Number' field supersedes all
+            other CRLs issued by this CA".  This document updates that
+            guidance such that where an RP retrieves a repository, and
+            the CRL in the repository has a different filename from
+            that of the previously-validated CRL, the newly-retrieved
+            CRL supersedes any previously-validated CRL.
+
+        </t>
+
+        <t>
+
+            With this behaviour, it is possible for a CA to be
+            configured such that any time it issues a new CRL, it uses
+            a new filename for that CRL.  If a CA were configured in
+            this way, the guidance from <xref target="RFC6487" />
+            would have no purpose.  To avoid this outcome, CAs SHOULD
+            NOT use new filenames for CRLs except in situations where
+            it is necessary to ensure the ongoing validity of the CA
+            or its repository.  Similarly, RP software SHOULD alert
+            its operators when a CRL filename changes for a given
+            CA.
+
+        </t>
+
+        <t>
+
+            Section 2.2 of <xref target="RFC6481" /> contains
+            non-normative guidance for the naming of CRLs in
+            repositories.  While a CA that supports the behaviour
+            described in this section cannot preserve the exact
+            filename suggested by that text (per section 2.1 of <xref
+            target="RFC4387" />), the CA SHOULD still ensure that the
+            filename is a value derived from the public key of the CA,
+            per the more general guidance in that section.
+
+        </t>
+
+    </section>
+
+    <section anchor="general-repository-handling" title="General Repository Handling">
+
+        <t>
+
+            The previous sections contain specific updates to address
+            potential permanent invalidity scenarios.  Notwithstanding
+            the above, RPs that encounter other permanent invalidity
+            scenarios SHOULD consider how those can be addressed such
+            that the scenario does not require the relevant CA or TA
+            to perform a key rollover operation.  For example, in the
+            event that an RP recognises that a permanent invalidity
+            scenario has occurred, the RP could alert the operator and
+            provide an option to the operator to stop relying on
+            cached data for the affected repository, so that the CA
+            can rectify the problem.
 
         </t>
 
@@ -326,15 +415,18 @@ ipr="trust200902" updates="RFC9286" consensus="true">
   <back>
     <references title="Normative References">
       &RFC2119;
+      &RFC4387;
+      &RFC6487;
       &RFC8174;
+      &RFC8182;
       &RFC9286;
     </references>
 
     <references title="Informative References">
       &RFC1982;
+      &RFC5280;
       &RFC6480;
       &RFC6481;
-      &RFC6488;
       &RFC6489;
       &RFC7942;
       &RFC8630;
@@ -358,7 +450,8 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             approach that has been used in the DNS context (among
             others) to permit the indefinite use of a finite number
             space.  At least in theory, it would be possible to use a
-            similar approach with the manifestNumber field as well.
+            similar approach with the manifestNumber and CRLNumber
+            fields as well.
 
         </t>
 
@@ -367,11 +460,57 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             However, unlike the corresponding DNS context with SOA
             resource records, an RPKI CA does not have visibility into
             or control over RPKI RPs generally.  This means that it is
-            not possible to select updated manifestNumber values or to
-            manage the relevant state transitions so as to
-            definitively ensure that all RPs will have valid state at
-            the end of the process.  The approach proposed in <xref
-            target="manifest-number-handling" /> does not have this problem.
+            not possible to select updated manifestNumber/CRLNumber
+            values or to manage the relevant state transitions so as
+            to definitively ensure that all RPs will have valid state
+            at the end of the process.  The approach proposed in <xref
+            target="manifest-number-handling" /> does not have this
+            problem.
+
+        </t>
+
+    </section>
+
+    <section title="Manifest thisUpdate">
+
+        <t>
+
+            The thisUpdate field in the manifest object is of type
+            GeneralizedTime, defined in section 4.1.2.5.2 of <xref
+            target="RFC5280" />.  This type has a maximum value of
+            99991231235959Z (i.e. 31 December 9999 23:59:59 GMT).
+            Section 4.2.1 of <xref target="RFC9286" /> requires that
+            "[e]ach RP MUST verify that this field value is greater
+            (more recent) than the most recent manifest it has
+            validated", so it would appear to be subject to the same
+            problem as for manifest and CRL numbers.  However, during
+            validation, if the RP detects that the current time is not
+            between the manifest thisUpdate and nextUpdate values, the
+            RP must treat the fetch as a failed fetch.  Therefore, the
+            RP will not cache a manifest with a current date far in
+            the future, and the CA can rectify the problem here by
+            reissuing the relevant manifest with the correct date.
+
+        </t>
+
+    </section>
+
+    <section title="CRL thisUpdate">
+
+        <t>
+
+            The thisUpdate field in a CRL may be encoded using either
+            the UTCTime type or the GeneralizedTime type, with UTCTime
+            being used for dates with a year value up to 2049, and
+            GeneralizedTime being used for dates with a year value of
+            2050 or greater.  As with the corresponding manifest
+            field, it is possible to issue a CRL with a thisUpdate
+            value corresponding to 31 December 9999 23:59:59 GMT.
+            However, there are no requirements in previous
+            specifications with respect to the thisUpdate and
+            nextUpdate fields in a CRL, save that those should
+            coincide with the corresponding manifest values (section
+            4.4 of <xref target="RFC9286" />).
 
         </t>
 
