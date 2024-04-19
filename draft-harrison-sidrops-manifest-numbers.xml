@@ -25,7 +25,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
 <rfc category="std"
-docName="draft-harrison-sidrops-manifest-numbers-02"
+docName="draft-ietf-sidrops-manifest-numbers-01"
 ipr="trust200902" updates="RFC9286" consensus="true">
 
   <front>
