@@ -83,16 +83,16 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
             The Resource Public Key Infrastructure (RPKI) makes use of
             repositories for the publication of certificates and other
-            objects.  At a minimum, each repository contains a
+            objects.  At a minimum, each repository contains a single
             Certificate Revocation List (CRL) for the publishing
             Certification Authority (CA), as well as a signed object
             called a manifest that lists each file that a publisher
             intends to include within the repository.  In certain
-            scenarios, the CRL and/or the manifest may contain data
-            that leads Relying Parties (RPs) to treat the repository
-            as being permanently unusable.  This document updates the
-            previous requirements in this space such that CAs are able
-            to recover from these scenarios.
+            scenarios, the the manifest may contain data that leads
+            Relying Parties (RPs) to treat the repository as being
+            permanently unusable.  This document updates the previous
+            requirements in this space such that CAs are able to recover
+            from these scenarios.
 
         </t>
     </abstract>
@@ -106,14 +106,13 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             target="RFC6480" /> makes use of repositories <xref
             target="RFC6481" /> for the publication of certificates
             and other objects.  At a minimum, each repository contains
-            a Certificate Revocation List (CRL) <xref target="RFC6487"
-            /> for the publishing Certification Authority (CA), as
-            well as a signed object called a manifest <xref
-            target="RFC9286" /> that lists each file that a publisher
-            intends to include within the repository.  In certain
-            scenarios, the CRL and/or the manifest may contain data
-            that leads clients to treat the repository as being
-            permanently unusable.
+            a single Certificate Revocation List (CRL) <xref target="RFC6487" />
+            for the publishing Certification Authority (CA), as well as a
+            signed object called a manifest <xref target="RFC9286" /> that
+            lists the current set of files that a publisher intends to
+            include within the repository.  In certain scenarios, the
+            the manifest may contain data that leads clients to treat the
+            repository as being permanently unusable.
 
         </t>
 
@@ -294,51 +293,6 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
     </section>
 
-    <section anchor="crl-number-handling" title="CRL Number Handling">
-
-        <t>
-
-            Section 5 of <xref target="RFC6487" /> states that "[w]here
-            two or more CRLs are issued by the same CA, the CRL with
-            the highest value of the 'CRL Number' field supersedes all
-            other CRLs issued by this CA".  This document updates that
-            guidance such that where an RP retrieves a repository, and
-            the CRL in the repository has a different filename from
-            that of the previously-validated CRL, the newly-retrieved
-            CRL supersedes any previously-validated CRL.
-
-        </t>
-
-        <t>
-
-            With this behaviour, it is possible for a CA to be
-            configured such that any time it issues a new CRL, it uses
-            a new filename for that CRL.  If a CA were configured in
-            this way, the guidance from <xref target="RFC6487" />
-            would have no purpose.  To avoid this outcome, CAs SHOULD
-            NOT use new filenames for CRLs except in situations where
-            it is necessary to ensure the ongoing validity of the CA
-            or its repository.  Similarly, RP software SHOULD alert
-            its operators when a CRL filename changes for a given
-            CA.
-
-        </t>
-
-        <t>
-
-            Section 2.2 of <xref target="RFC6481" /> contains
-            non-normative guidance for the naming of CRLs in
-            repositories.  While a CA that supports the behaviour
-            described in this section cannot preserve the exact
-            filename suggested by that text (per section 2.1 of <xref
-            target="RFC4387" />), the CA SHOULD still ensure that the
-            filename is a value derived from the public key of the CA,
-            per the more general guidance in that section.
-
-        </t>
-
-    </section>
-
     <section anchor="general-repository-handling" title="General Repository Handling">
 
         <t>
@@ -450,8 +404,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             approach that has been used in the DNS context (among
             others) to permit the indefinite use of a finite number
             space.  At least in theory, it would be possible to use a
-            similar approach with the manifestNumber and CRLNumber
-            fields as well.
+            similar approach with the manifestNumber field as well.
 
         </t>
 
@@ -460,11 +413,11 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             However, unlike the corresponding DNS context with SOA
             resource records, an RPKI CA does not have visibility into
             or control over RPKI RPs generally.  This means that it is
-            not possible to select updated manifestNumber/CRLNumber
-            values or to manage the relevant state transitions so as
-            to definitively ensure that all RPs will have valid state
-            at the end of the process.  The approach proposed in <xref
-            target="manifest-number-handling" /> does not have this
+            not possible to select an updated manifestNumber value or
+            to manage the relevant state transitions so as to definitively
+            ensure that all RPs will have valid state at the end of the
+            process.  The approach proposed in
+            <xref target="manifest-number-handling" /> does not have this
             problem.
 
         </t>
@@ -483,34 +436,13 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             "[e]ach RP MUST verify that this field value is greater
             (more recent) than the most recent manifest it has
             validated", so it would appear to be subject to the same
-            problem as for manifest and CRL numbers.  However, during
+            problem as for manifest numbers.  However, during
             validation, if the RP detects that the current time is not
             between the manifest thisUpdate and nextUpdate values, the
             RP must treat the fetch as a failed fetch.  Therefore, the
             RP will not cache a manifest with a current date far in
             the future, and the CA can rectify the problem here by
             reissuing the relevant manifest with the correct date.
-
-        </t>
-
-    </section>
-
-    <section title="CRL thisUpdate">
-
-        <t>
-
-            The thisUpdate field in a CRL may be encoded using either
-            the UTCTime type or the GeneralizedTime type, with UTCTime
-            being used for dates with a year value up to 2049, and
-            GeneralizedTime being used for dates with a year value of
-            2050 or greater.  As with the corresponding manifest
-            field, it is possible to issue a CRL with a thisUpdate
-            value corresponding to 31 December 9999 23:59:59 GMT.
-            However, there are no requirements in previous
-            specifications with respect to the thisUpdate and
-            nextUpdate fields in a CRL, save that those should
-            coincide with the corresponding manifest values (section
-            4.4 of <xref target="RFC9286" />).
 
         </t>
 
