@@ -1,0 +1,560 @@
+
+
+
+
+Internet Engineering Task Force                              T. Harrison
+Internet-Draft                                             G. Michaelson
+Updates: RFC9286 (if approved)                                     APNIC
+Intended status: Standards Track                             J. Snijders
+Expires: 12 December 2024                                         Fastly
+                                                            10 June 2024
+
+
+                     RPKI Manifest Number Handling
+                 draft-ietf-sidrops-manifest-numbers-00
+
+Abstract
+
+   The Resource Public Key Infrastructure (RPKI) makes use of signed
+   objects called manifests.  A manifest lists each file that a
+   publisher intends to include within an RPKI repository, and can be
+   used to detect certain forms of attack against a repository.
+   Manifests include a "manifest number" (manifestNumber), which the
+   publisher must increment whenever it issues a new manifest, and
+   Relying Parties (RPs) are required to verify that a newly-retrieved
+   manifest for a given Certification Authority (CA) has a higher
+   manifestNumber than the previously-validated manifest.  However, the
+   manifestNumber field is 20 octets in length (i.e. not unbounded), and
+   no behaviour is specified for when a manifestNumber reaches the
+   largest possible value.  This document specifies publisher and RP
+   behaviour for this scenario.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 12 December 2024.
+
+Copyright Notice
+
+   Copyright (c) 2024 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 1]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   4
+   2.  Manifest Number Handling  . . . . . . . . . . . . . . . . . .   4
+   3.  Operational Considerations  . . . . . . . . . . . . . . . . .   4
+   4.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   4
+   5.  Implementation status . . . . . . . . . . . . . . . . . . . .   4
+   6.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   5
+   7.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   5
+     7.1.  Normative References  . . . . . . . . . . . . . . . . . .   5
+     7.2.  Informative References  . . . . . . . . . . . . . . . . .   5
+   Appendix A.  Serial Number Arithmetic . . . . . . . . . . . . . .   6
+   Appendix B.  Walkthrough of the rpki-client implementation  . . .   7
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  10
+
+1.  Introduction
+
+   The Resource Public Key Infrastructure (RPKI) [RFC6480] makes use of
+   signed objects [RFC6488] called manifests [RFC9286].  A manifest
+   lists each file that a publisher intends to include within an RPKI
+   repository [RFC6481], and can be used to detect certain forms of
+   attack against a repository.  Manifests include a "manifest number"
+   (manifestNumber), which the publisher must increment whenever it
+   issues a new manifest, and Relying Parties (RPs) are required to
+   verify that a newly-retrieved manifest for a given Certification
+   Authority (CA) has a higher manifestNumber than the previously-
+   validated manifest (see section 4.2.1 of [RFC9286]).
+
+   However, the manifestNumber field is 20 octets in length (i.e. not
+   unbounded), and no behaviour is specified for when a manifestNumber
+   reaches the largest possible value, which means that a publisher can
+   no longer make use of a given CA certificate when that value is
+   reached.  (For the purposes of [RFC9286], a "CA" is represented by a
+   CA certificate with a stable location and a stable private key.
+   Reissuing a CA certificate with changed resources or a changed expiry
+   date does not change the identity of the CA such that the stored
+   manifestNumber for the CA is reset, for example.)
+
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 2]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+   While it is practically impossible for a publisher to reach the
+   largest possible value under normal operating conditions (it would
+   require that the publisher issue one manifest per second for
+   46,343,912,903,694,283,301,740 quintillion years), there is a chance
+   that it could be reached due to bugs in the issuance or publication
+   systems or incorrect/inadvertent use of those systems.  For example:
+   occur:
+
+      Incrementing by large values when issuing manifests, such that the
+      time to reach that largest value is reduced.
+
+      Reissuing new manifests in an infinite delay-free loop, such that
+      the manifestNumber increases by a large value in a comparatively
+      short period of time.
+
+      Inadvertently setting the manifestNumber to the largest possible
+      value, such that the publisher will no longer be able to publish
+      usable manifests for that repository.
+
+   These scenarios might also arise in combination and be more severe as
+   a result: for example, a large manifest number increment bug in
+   conjunction with a manifest reissuance loop problem.
+
+   For a subordinate CA, the risk of repository invalidation due to this
+   problem can be addressed by the publisher simply using the key
+   rollover process ([RFC6489]) to get a new Certification Authority
+   (CA) certificate.  RPs will treat this new certificate as though it
+   represents a distinct CA, and the manifestNumber can be reset at that
+   point.
+
+   However, this option is not available for RPKI Trust Anchors (TAs).
+   If a TA publishes a manifest with the largest-possible manifestNumber
+   value, then it is not possible to make use of the TA after that
+   point, because the certificate location (stored in the associated
+   Trust Anchor Locator (TAL) [RFC8630]) and its private key cannot be
+   changed.  Issuing a new TA and distributing the associated TAL to
+   clients would involve a large amount of work for TA operators and
+   RPs, and there would be a limited degree of RPKI protection by way of
+   that TA for the time between the issuance of the problematic manifest
+   and the installation of the new TAL for a given client.
+
+   In order to avoid these problems, this document defines how
+   publishers and RPs can handle this scenario in order to facilitate
+   ongoing use of an affected repository.
+
+
+
+
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 3]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [RFC2119] [RFC8174].
+
+2.  Manifest Number Handling
+
+   For a given CA, an RP MUST NOT reject a new manifest issued by that
+   CA on the grounds of it not having a higher manifestNumber than a
+   previously validated manifest if the new manifest has a different
+   filename from that of the previously validated manifest.  In other
+   words, an RP MUST reset its stored manifestNumber for a given CA if
+   the CA changes the filename of its manifest.
+
+   With this behaviour, it is possible for a CA to be configured such
+   that any time it issues a new manifest, it uses a new filename for
+   that manifest.  If a CA were configured in this way, the
+   manifestNumber validation set out in section 4.2.1 of [RFC9286] would
+   have no purpose.  To avoid this outcome, CAs SHOULD NOT use new
+   filenames for manifests except in situations where it is necessary to
+   ensure the ongoing validity of the CA or its repository.  Similarly,
+   RP software SHOULD alert its operators when a manifest filename
+   changes for a given CA.
+
+   Note that this approach is different from that described in
+   Section 3.2.1 of [RFC8488].
+
+3.  Operational Considerations
+
+   CA software may opt to support this functionality in various ways.
+   For example, it could change the manifest filename when the
+   manifestNumber reaches a certain threshold, or it could alert the
+   operator in this scenario and request confirmation that the filename
+   should be changed.
+
+4.  IANA Considerations
+
+   N/A
+
+5.  Implementation status
+
+   This section is to be removed before publishing as an RFC.
+
+   This section records the status of known implementations of the
+   protocol defined by this specification at the time of posting of this
+   Internet-Draft, and is based on a proposal described in [RFC7942].
+   The description of implementations in this section is intended to
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 4]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+   assist the IETF in its decision processes in progressing drafts to
+   RFCs.  Please note that the listing of any individual implementation
+   here does not imply endorsement by the IETF.  Furthermore, no effort
+   has been spent to verify the information presented here that was
+   supplied by IETF contributors.  This is not intended as, and must not
+   be construed to be, a catalog of available implementations or their
+   features.  Readers are advised to note that other implementations may
+   exist.
+
+   According to [RFC7942], "this will allow reviewers and working groups
+   to assign due consideration to documents that have the benefit of
+   running code, which may serve as evidence of valuable experimentation
+   and feedback that have made the implemented protocols more mature.
+   It is up to the individual working groups to use this information as
+   they see fit".
+
+   *  OpenBSD [rpki-client]
+
+6.  Acknowledgements
+
+   N/A
+
+7.  References
+
+7.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC9286]  Austein, R., Huston, G., Kent, S., and M. Lepinski,
+              "Manifests for the Resource Public Key Infrastructure
+              (RPKI)", RFC 9286, DOI 10.17487/RFC9286, June 2022,
+              <https://www.rfc-editor.org/info/rfc9286>.
+
+7.2.  Informative References
+
+   [RFC1982]  Elz, R. and R. Bush, "Serial Number Arithmetic", RFC 1982,
+              DOI 10.17487/RFC1982, August 1996,
+              <https://www.rfc-editor.org/info/rfc1982>.
+
+
+
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 5]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+   [RFC6480]  Lepinski, M. and S. Kent, "An Infrastructure to Support
+              Secure Internet Routing", RFC 6480, DOI 10.17487/RFC6480,
+              February 2012, <https://www.rfc-editor.org/info/rfc6480>.
+
+   [RFC6481]  Huston, G., Loomans, R., and G. Michaelson, "A Profile for
+              Resource Certificate Repository Structure", RFC 6481,
+              DOI 10.17487/RFC6481, February 2012,
+              <https://www.rfc-editor.org/info/rfc6481>.
+
+   [RFC6488]  Lepinski, M., Chi, A., and S. Kent, "Signed Object
+              Template for the Resource Public Key Infrastructure
+              (RPKI)", RFC 6488, DOI 10.17487/RFC6488, February 2012,
+              <https://www.rfc-editor.org/info/rfc6488>.
+
+   [RFC6489]  Huston, G., Michaelson, G., and S. Kent, "Certification
+              Authority (CA) Key Rollover in the Resource Public Key
+              Infrastructure (RPKI)", BCP 174, RFC 6489,
+              DOI 10.17487/RFC6489, February 2012,
+              <https://www.rfc-editor.org/info/rfc6489>.
+
+   [RFC7942]  Sheffer, Y. and A. Farrel, "Improving Awareness of Running
+              Code: The Implementation Status Section", BCP 205,
+              RFC 7942, DOI 10.17487/RFC7942, July 2016,
+              <https://www.rfc-editor.org/info/rfc7942>.
+
+   [RFC8488]  Muravskiy, O. and T. Bruijnzeels, "RIPE NCC's
+              Implementation of Resource Public Key Infrastructure
+              (RPKI) Certificate Tree Validation", RFC 8488,
+              DOI 10.17487/RFC8488, December 2018,
+              <https://www.rfc-editor.org/info/rfc8488>.
+
+   [RFC8630]  Huston, G., Weiler, S., Michaelson, G., Kent, S., and T.
+              Bruijnzeels, "Resource Public Key Infrastructure (RPKI)
+              Trust Anchor Locator", RFC 8630, DOI 10.17487/RFC8630,
+              August 2019, <https://www.rfc-editor.org/info/rfc8630>.
+
+   [rpki-client]
+              OpenBSD Project, "rpki-client", January 2024,
+              <https://www.rpki-client.org/>.
+
+Appendix A.  Serial Number Arithmetic
+
+   Serial number arithmetic [RFC1982] is an approach that has been used
+   in the DNS context (among others) to permit the indefinite use of a
+   finite number space.  At least in theory, it would be possible to use
+   a similar approach with the manifestNumber field as well.
+
+
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 6]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+   However, unlike the corresponding DNS context with SOA resource
+   records, an RPKI CA does not have visibility into or control over
+   RPKI RPs generally.  This means that it is not possible to select
+   updated manifestNumber values or to manage the relevant state
+   transitions so as to definitively ensure that all RPs will have valid
+   state at the end of the process.  The approach proposed in Section 2
+   does not have this problem.
+
+Appendix B.  Walkthrough of the rpki-client implementation
+
+   This section describes the [rpki-client] implementation with regard
+   to handling manifest numbers.  The process is composed of multiple
+   stages:
+
+   1.  Fetching the manifests and acquiring referenced files
+
+   2.  Preprocessing of the manifests
+
+   3.  Selecting the first candidate manifest
+
+   4.  Matching file names and hashes
+
+   5.  Optionally selecting the second candidate manifest
+
+B.1.  Stage: Fetching the Manifests and Acquiring Referenced Files
+
+   The RP follows _rpkiNotify_ or _caRepository_ pointers in the
+   _SubjectInfoAccess_ extension of valid CA certificates to queue up
+   synchronization tasks.
+
+   At the end of this stage the RP has zero, one, or two manifests for a
+   given _caRepository_. Depending on the validation status, the RP
+   stores files into two locations: _DIR_VALID_ or _DIR_TEMP_.
+   _DIR_VALID_ contains objects which were found to be valid (current,
+   not revoked, not expired) during the previous validation run, the
+   _DIR_TEMP_ location contains files retrieved via RRDP or rsync which
+   have not yet been validated, or were rejected by the validation
+   process.
+
+   If the remote publication point is unreachable on both RRDP and
+   rsync, no purported "new" manifest file will be stored in _DIR_TEMP_.
+   It is possible that the _DIR_VALID_ location contains a locally
+   cached version of the object from a previous validation run.
+
+
+
+
+
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 7]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+B.2.  Stage: preprocessing of the manifests
+
+   Constructing the path and filename based on the _rpkiManifest_ of the
+   CA certificate, the RP attempts to open what purportedly are two
+   version of the same _.mft_ file in _DIR_TEMP_ and _DIR_VALID_,
+   respectively.
+
+   For brevity's sake, the version in _DIR_TEMP_ is associated with a
+   data structure named *mft1*, the version in _DIR_VALID_ is associated
+   with a data structure named *mft2*.
+
+   Assuming two files exist in the _DIR_TEMP_ and _DIR_VALID_ locations,
+   both files are run through a series of checks.  If any check fails,
+   that file will be considered ineligible.
+
+   1.   Can the file be opened?
+
+   2.   Can the content of the file be DER-decoded
+
+   3.   Can the DER-content be parsed as CMS ContentInfo?
+
+   4.   Is the CMS self-signage correct?
+
+   5.   Can exactly one CMS SignerInfo be extracted?
+
+   6.   Is the ContentInfo of the right version?
+
+   7.   Is the SignerInfo of the right version?
+
+   8.   Does the SignerInfo have the correct signed attributes?
+
+   9.   Does the SignerInfo have the correct digest and signature
+        algorithms?
+
+   10.  Does the ContentInfo have the right type of embedded content?
+
+   11.  Does the eContentType match the Content-Type?
+
+   12.  Does the CMS contain zero CRLs?
+
+   13.  Can exactly one X.509 cert be extracted from the SignerInfo?
+
+   14.  Can the notBefore field be extracted from the X.509 cert?
+
+   15.  Can the notAfter field be extracted from the X.509 cert?
+
+   16.  Does the X.509 cert's SKI match the SignerInfo's
+        SignerIdentifier?
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 8]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+   17.  Can the AIA be extracted from the X.509 EE?
+
+   18.  Can the AKI be extracted from the X.509 EE?
+
+   19.  Can the SIA be extracted from the X.509 EE?
+
+   20.  Can the SKI be extracted from the X.509 EE?
+
+   21.  Are the X509 EE's RFC 3779 extensions set to inherit?
+
+   22.  Can the eContent be parsed according to the ASN.1 formal syntax?
+
+   23.  Is the Manifest eContent of the right version?
+
+   24.  Can the manifestNumber be extracted?
+
+   25.  Is the CMS signing-time before the Manifest nextUpdate time?
+
+   26.  Is 'now' not before the Manifest thisUpdate?
+
+   27.  Is 'now' not after the Manifest nextUpdate?
+
+   28.  Is the Manifest nextUpdate not before the Manifest thisUpdate?
+
+   29.  Does a valid certification path from a TA to this EE cert exist?
+
+   Through the above checks, the *mft1* and *mft2* data structures are
+   populated, or marked ineligible.
+
+B.3.  Stage: selecting the first candidate manifest
+
+   Assuming both *mft1* and *mft2* successfully passed through stage 2
+   (Appendix B.2), a comparison can be made between *mft1* and *mft2* to
+   select the candidate mft for the next stage.
+
+   The RP checks whether the locally cached version *mft2* (from
+   _DIR_VALID_) is older in the sense that was issued earlier than
+   *mft1* (from _DIR_TEMP_) by comparing the Manifest _thisUpdate_
+   timestamp, and has a smaller _manifestNumber_. If both conditions are
+   true, the RP will select *mft1* as candidate for stage stage 4
+   (Appendix B.4).
+
+   If there was some kind of issue with *mft1*(such as it being older
+   than or has the same _thisUpdate_ as *mft2*, or it having a
+   _manifestNumber_ which is lower than or equal to *mft2*), the RP
+   proceeds with stage 5 (Appendix B.5).
+
+
+
+
+
+Harrison, et al.        Expires 12 December 2024                [Page 9]
+
+Internet-Draft        RPKI Manifest Number Handling            June 2024
+
+
+B.4.  Stage: matching file names and hashes for mft1
+
+   The RP will now verify the hash value of each file listed in manifest
+   *mft1* matches the value obtained by hashing the file acquired from
+   the publication point.  If the computed hash value of a file listed
+   on the manifest does not match the hash value contained in the
+   manifest, then a _failed fetch_ occurred and the RP proceeds to stage
+   5 (Appendix B.5).
+
+   If all the files and hashes matched, *mft1* and its associated files
+   are moved from _DIR_TEMP_ to _DIR_VALID_. The manifest handling
+   procedure now ends.
+
+B.5.  Optional Stage: matching file names and hashes for mft2
+
+   This stage is only reached if there was an issue with *mft1*.
+
+   The RP will now verify the hash value of each file listed in manifest
+   *mft2* matches the value obtained by hashing the file acquired from
+   the publication point.  If the computed hash value of a file listed
+   on the manifest does not match the hash value contained in the
+   manifest, then the _caRepository_ is busted.
+
+Authors' Addresses
+
+   Tom Harrison
+   Asia Pacific Network Information Centre
+   6 Cordelia St
+   South Brisbane QLD 4101
+   Australia
+   Email: tomh@apnic.net
+
+
+   George G. Michaelson
+   Asia-Pacific Network Information Centre
+   6 Cordelia St
+   South Brisbane QLD 4101
+   Australia
+   Email: ggm@apnic.net
+
+
+   Job Snijders
+   Fastly
+   Amsterdam
+   Netherlands
+   Email: job@fastly.com
+
+
+
+
+
+Harrison, et al.        Expires 12 December 2024               [Page 10]

@@ -7,7 +7,7 @@
 <!ENTITY RFC5280 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5280.xml">
 <!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
 <!ENTITY RFC6481 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6481.xml">
-<!ENTITY RFC6487 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6487.xml">
+<!ENTITY RFC6488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6488.xml">
 <!ENTITY RFC6489 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6489.xml">
 <!ENTITY RFC7942 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7942.xml">
 <!ENTITY RFC8182 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8182.xml">
@@ -29,7 +29,7 @@ docName="draft-ietf-sidrops-manifest-numbers-01"
 ipr="trust200902" updates="RFC9286" consensus="true">
 
   <front>
-    <title>RPKI Repository Handling Updates</title>
+    <title>RPKI Manifest Number Handling</title>
 
     <author initials="T." surname="Harrison" fullname="Tom Harrison">
         <organization abbrev="APNIC">Asia Pacific Network Information Centre</organization>
@@ -82,17 +82,21 @@ ipr="trust200902" updates="RFC9286" consensus="true">
         <t>
 
             The Resource Public Key Infrastructure (RPKI) makes use of
-            repositories for the publication of certificates and other
-            objects.  At a minimum, each repository contains a single
-            Certificate Revocation List (CRL) for the publishing
-            Certification Authority (CA), as well as a signed object
-            called a manifest that lists each file that a publisher
-            intends to include within the repository.  In certain
-            scenarios, the the manifest may contain data that leads
-            Relying Parties (RPs) to treat the repository as being
-            permanently unusable.  This document updates the previous
-            requirements in this space such that CAs are able to recover
-            from these scenarios.
+            signed objects called manifests.  A manifest lists each
+            file that a publisher intends to include within an RPKI
+            repository, and can be used to detect certain forms of
+            attack against a repository.  Manifests include a
+            "manifest number" (manifestNumber), which the publisher
+            must increment whenever it issues a new manifest, and
+            Relying Parties (RPs) are required to verify that a
+            newly-retrieved manifest for a given Certification
+            Authority (CA) has a higher manifestNumber than the
+            previously-validated manifest.  However, the
+            manifestNumber field is 20 octets in length (i.e. not
+            unbounded), and no behaviour is specified for when a
+            manifestNumber reaches the largest possible value.  This
+            document specifies publisher and RP behaviour for this
+            scenario.
 
         </t>
     </abstract>
@@ -103,28 +107,19 @@ ipr="trust200902" updates="RFC9286" consensus="true">
         <t>
 
             The Resource Public Key Infrastructure (RPKI) <xref
-            target="RFC6480" /> makes use of repositories <xref
-            target="RFC6481" /> for the publication of certificates
-            and other objects.  At a minimum, each repository contains
-            a single Certificate Revocation List (CRL) <xref target="RFC6487" />
-            for the publishing Certification Authority (CA), as well as a
-            signed object called a manifest <xref target="RFC9286" /> that
-            lists the current set of files that a publisher intends to
-            include within the repository.  In certain scenarios, the
-            the manifest may contain data that leads clients to treat the
-            repository as being permanently unusable.
-
-        </t>
-
-        <t>
-
-            For example, manifests include a "manifest number"
-            (manifestNumber), which the publisher must increment
-            whenever it issues a new manifest, and Relying Parties
-            (RPs) are required to verify that a newly-retrieved
-            manifest for a given Certification Authority (CA) has a
-            higher manifestNumber than the previously-validated
-            manifest (see section 4.2.1 of <xref target="RFC9286" />).
+            target="RFC6480" /> makes use of signed objects <xref
+            target="RFC6488" /> called manifests <xref
+            target="RFC9286" />.  A manifest lists each file that a
+            publisher intends to include within an RPKI repository
+            <xref target="RFC6481" />, and can be used to detect
+            certain forms of attack against a repository.  Manifests
+            include a "manifest number" (manifestNumber), which the
+            publisher must increment whenever it issues a new
+            manifest, and Relying Parties (RPs) are required to verify
+            that a newly-retrieved manifest for a given Certification
+            Authority (CA) has a higher manifestNumber than the
+            previously-validated manifest (see section 4.2.1 of <xref
+            target="RFC9286" />).
 
         </t>
 
@@ -149,7 +144,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             While it is practically impossible for a publisher to
             reach the largest possible value under normal operating
             conditions (it would require that the publisher issue one
-            manifest per second for 46,343,912,903,694,283,301,740
+            manifest per second for 23,171,956,451,847,141,650,870
             quintillion years), there is a chance that it could be
             reached due to bugs in the issuance or publication systems
             or incorrect/inadvertent use of those systems.  For
@@ -263,7 +258,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             To avoid certain forms of replay attack, the RP MUST
             verify that the URI in the accessLocation in one of the
             id-ad-signedObject accessMethods in the manifest's Subject
-            Information (SIA) extension exactly matches the URI
+            Information Access (SIA) extension exactly matches the URI
             presented in the RPKI Repository Delta Protocol (RRDP)
             <xref target="RFC8182" /> "publish" element or the path
             presented by remote rsync servers.
@@ -297,17 +292,18 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-            The previous sections contain specific updates to address
-            potential permanent invalidity scenarios.  Notwithstanding
-            the above, RPs that encounter other permanent invalidity
-            scenarios SHOULD consider how those can be addressed such
-            that the scenario does not require the relevant CA or TA
-            to perform a key rollover operation.  For example, in the
-            event that an RP recognises that a permanent invalidity
-            scenario has occurred, the RP could alert the operator and
-            provide an option to the operator to stop relying on
-            cached data for the affected repository, so that the CA
-            can rectify the problem.
+            The previous section contains a specific update for the
+            handling of manifest numbers, in order to address one
+            potential permanent invalidity scenario.  RPs that
+            encounter other permanent invalidity scenarios SHOULD also
+            consider how those can be addressed such that the scenario
+            does not require the relevant CA or TA to perform a key
+            rollover operation.  For example, in the event that an RP
+            recognises that a permanent invalidity scenario has
+            occurred, the RP could alert the operator and provide an
+            option to the operator to stop relying on cached data for
+            the affected repository, so that the CA can rectify the
+            problem.
 
         </t>
 
@@ -317,12 +313,12 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-            CA software may opt to support this functionality in
-            various ways.  For example, it could change the manifest
-            filename when the manifestNumber reaches a certain
-            threshold, or it could alert the operator in this scenario
-            and request confirmation that the filename should be
-            changed.
+            CA software may opt to support the manifest number reset
+            functionality in various ways.  For example, it could
+            change the manifest filename when the manifestNumber
+            reaches a certain threshold, or it could alert the
+            operator in this scenario and request confirmation that
+            the filename should be changed.
 
         </t>
 
@@ -372,7 +368,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
     <references title="Normative References">
       &RFC2119;
       &RFC4387;
-      &RFC6487;
+      &RFC6488;
       &RFC8174;
       &RFC8182;
       &RFC9286;
@@ -412,15 +408,15 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
         <t>
 
-            However, unlike the corresponding DNS context with SOA
-            resource records, an RPKI CA does not have visibility into
-            or control over RPKI RPs generally.  This means that it is
-            not possible to select an updated manifestNumber value or
-            to manage the relevant state transitions so as to definitively
-            ensure that all RPs will have valid state at the end of the
-            process.  The approach proposed in
-            <xref target="manifest-number-handling" /> does not have this
-            problem.
+            However, unlike the corresponding DNS context with Start
+            of Authority (SOA) resource records, an RPKI CA does not
+            have visibility into or control over RPKI RPs generally.
+            This means that it is not possible to select an updated
+            manifestNumber value or to manage the relevant state
+            transitions so as to guarantee that all RPs will have
+            valid state at the end of the process.  The approach
+            proposed in <xref target="manifest-number-handling" />
+            does not have this problem.
 
         </t>
 
