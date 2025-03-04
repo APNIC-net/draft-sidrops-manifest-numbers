@@ -1,0 +1,684 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
+<!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
+<!ENTITY RFC4387 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4387.xml">
+<!ENTITY RFC5280 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5280.xml">
+<!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
+<!ENTITY RFC6481 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6481.xml">
+<!ENTITY RFC6487 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6487.xml">
+<!ENTITY RFC6488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6488.xml">
+<!ENTITY RFC6489 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6489.xml">
+<!ENTITY RFC7942 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7942.xml">
+<!ENTITY RFC8182 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8182.xml">
+<!ENTITY RFC8630 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8630.xml">
+<!ENTITY RFC8488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8488.xml">
+<!ENTITY RFC9286 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9286.xml">
+<!ENTITY id.draft-ietf-sidrops-rpki-crl-numbers SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-sidrops-rpki-crl-numbers-00.xml">
+]>
+
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<rfc category="std"
+docName="draft-ietf-sidrops-manifest-numbers-03"
+ipr="trust200902" updates="RFC9286" consensus="true">
+
+  <front>
+    <title>RPKI Manifest Number Handling</title>
+
+    <author initials="T." surname="Harrison" fullname="Tom Harrison">
+        <organization abbrev="APNIC">Asia Pacific Network Information Centre</organization>
+        <address>
+            <postal>
+                <street>6 Cordelia St</street>
+                <city>South Brisbane</city>
+                <code>4101</code>
+                <country>Australia</country>
+                <region>QLD</region>
+            </postal>
+            <email>tomh@apnic.net</email>
+        </address>
+    </author>
+
+    <author fullname="George G. Michaelson" initials="G." surname="Michaelson">
+	<organization abbrev="APNIC">Asia-Pacific Network Information Centre</organization>
+
+	<address>
+	    <postal>
+		<street>6 Cordelia St</street>
+		<city>South Brisbane</city>
+		<region>QLD</region>
+		<code>4101</code>
+		<country>Australia</country>
+	    </postal>
+	    <email>ggm@apnic.net</email>
+	</address>
+    </author>
+
+    <author fullname="Job Snijders" initials="J." surname="Snijders">
+        <organization></organization>
+	<address>
+	    <postal>
+		<street/>
+		<city>Amsterdam</city>
+		<region/>
+		<country>Netherlands</country>
+	    </postal>
+	    <email>job@sobornost.net</email>
+	</address>
+    </author>
+
+    <date/>
+
+    <area>General</area>
+    <workgroup>Internet Engineering Task Force</workgroup>
+    <keyword>template</keyword>
+    <abstract>
+        <t>
+
+            The Resource Public Key Infrastructure (RPKI) makes use of
+            signed objects called manifests.  A manifest lists each
+            file that a publisher intends to include within an RPKI
+            repository, and can be used to detect certain forms of
+            attack against a repository.  Manifests include a
+            "manifest number" (manifestNumber), which the publisher
+            must increment whenever it issues a new manifest, and
+            Relying Parties (RPs) are required to verify that a
+            newly-retrieved manifest for a given Certification
+            Authority (CA) has a higher manifestNumber than the
+            previously-validated manifest.  However, the
+            manifestNumber field is 20 octets in length (i.e. not
+            unbounded), and no behaviour is specified for when a
+            manifestNumber reaches the largest possible value.  This
+            document specifies publisher and RP behaviour for this
+            scenario.
+
+        </t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+        <t>
+
+            The Resource Public Key Infrastructure (RPKI) <xref
+            target="RFC6480" /> makes use of signed objects <xref
+            target="RFC6488" /> called manifests <xref
+            target="RFC9286" />.  A manifest lists each file that a
+            publisher intends to include within an RPKI repository
+            <xref target="RFC6481" />, and can be used to detect
+            certain forms of attack against a repository.  Manifests
+            include a "manifest number" (manifestNumber), which the
+            publisher must increment whenever it issues a new
+            manifest, and Relying Parties (RPs) are required to verify
+            that a newly-retrieved manifest for a given Certification
+            Authority (CA) has a higher manifestNumber than the
+            previously-validated manifest (see <xref
+            target="RFC9286" sectionFormat="of" section="4.2.1" />).
+
+        </t>
+
+        <t>
+
+            However, the manifestNumber field is 20 octets in length
+            (i.e. not unbounded), and no behaviour is specified for
+            when a manifestNumber reaches the largest possible value
+            (2^159-1).  When that value is reached, some RP
+            implementations will accept a new manifest for the CA only
+            once the current manifest has expired, while others will
+            not accept a new manifest at all.  (For the purposes of
+            <xref target="RFC9286" />, a "CA" is represented by a CA
+            certificate with a stable location and a stable private
+            key. Reissuing a CA certificate with changed resources or
+            a changed expiry date does not change the identity of the
+            CA such that the stored manifestNumber for the CA is
+            reset, for example.)
+
+        </t>
+
+        <t>
+
+            While it is practically impossible for a publisher to
+            reach the largest possible value under normal operating
+            conditions (it would require that the publisher issue one
+            manifest per second for 23,171,956,451,847,141,650,870
+            quintillion years), there is a chance that it could be
+            reached due to bugs in the issuance or publication systems
+            or incorrect/inadvertent use of those systems.  For
+            example:
+
+            <list>
+
+                <t>Incrementing by large values when issuing
+                manifests, such that the time to reach that largest
+                value is reduced.</t>
+
+                <t>Reissuing new manifests in an infinite delay-free
+                loop, such that the manifestNumber increases by a
+                large value in a comparatively short period of
+                time.</t>
+
+                <t>Inadvertently setting the manifestNumber to the
+                largest possible value, such that the publisher will
+                no longer be able to publish usable manifests for that
+                repository.</t>
+
+            </list>
+
+            These scenarios might also arise in combination and be
+            more severe as a result: for example, a large manifest
+            number increment bug in conjunction with a manifest
+            reissuance loop problem.
+
+        </t>
+
+        <t>
+
+            For a subordinate CA, the risk of repository invalidation
+            due to this problem can be addressed by the publisher
+            simply using the key rollover process (<xref
+            target="RFC6489" />) to get a new CA certificate.  RPs
+            will treat this new certificate as
+            though it represents a distinct CA, and the manifestNumber
+            can be reset at that point.
+
+        </t>
+
+        <t>
+
+            However, this option is not available for RPKI Trust
+            Anchors (TAs).  If a TA publishes a manifest with the
+            largest-possible manifestNumber value, then it is
+            difficult to rely on the TA after that point, since (per
+            earlier comments) some RPs will not accept a new manifest
+            until the current one has expired, while others will
+            reject all new manifests indefinitely.  Particularly in
+            the case of TAs, the manifest validity period may be quite
+            long, too.  Issuing a new TA and distributing the
+            associated TAL to clients would involve a large amount of
+            work for TA operators and RPs.  Additionally, depending on
+            the RP implementation in use by a client, there would be a
+            limited degree of RPKI protection by way of that TA for
+            the time between the issuance of the problematic manifest
+            and the installation of the new TAL.
+
+        </t>
+
+        <t>
+
+            In order to avoid these problems, this document defines
+            how publishers and RPs can handle this scenario in order
+            to facilitate ongoing use of an affected repository.
+
+        </t>
+
+      <section title="Requirements Language">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+        "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+        document are to be interpreted as described in <xref
+        target="RFC2119" /> <xref target="RFC8174"/>.</t>
+      </section>
+    </section>
+
+    <section anchor="manifest-number-handling" title="Manifest Number Handling">
+
+        <t>
+
+            For a given CA, an RP MUST NOT reject a new manifest
+            issued by that CA on the basis of it not having a higher
+            manifestNumber than a previously-validated manifest if the
+            new manifest has a different filename from that of the
+            previously-validated manifest.  In other words, an RP MUST
+            reset its stored manifestNumber for a given CA if the CA
+            changes the filename of its manifest.
+
+        </t>
+
+        <t>
+
+            With this behaviour, it is possible for a CA to be
+            configured such that any time it issues a new manifest, it
+            uses a new filename for that manifest.  If a CA were
+            configured in this way, the manifestNumber validation set
+            out in <xref target="RFC9286" sectionFormat="of"
+            section="4.2.1" /> would have no purpose.  To avoid this
+            outcome, CAs SHOULD NOT use new filenames for manifests
+            except in situations where it is necessary to ensure the
+            ongoing validity of the CA or its repository.  Similarly,
+            RP software SHOULD alert its operators when a manifest
+            filename changes for a given CA.
+
+        </t>
+
+        <t>
+
+            To avoid certain forms of replay attack, the RP MUST
+            verify that the URI in the accessLocation in one of the
+            id-ad-signedObject accessMethods in the manifest's Subject
+            Information Access (SIA) extension exactly matches the URI
+            presented in the RPKI Repository Delta Protocol (RRDP)
+            <xref target="RFC8182" /> "publish" element or the path
+            presented by remote rsync servers.
+
+        </t>
+
+        <t>
+
+            <xref target="RFC6481" sectionFormat="of" section="2.2" />
+            contains non-normative guidance for the naming of manifest
+            files in repositories.  While a CA that supports the
+            behaviour described in this section cannot preserve the
+            exact filename suggested by that text (per <xref
+            target="RFC4387" sectionFormat="of" section="2.1" />), the
+            CA SHOULD still ensure that the filename is a value
+            derived from the public key of the CA, per the more
+            general guidance in that section.
+
+        </t>
+
+        <t>
+
+            A CA specifies its manifest URI by way of an SIA entry
+            with an accessMethod of id-ad-rpkiManifest (<xref
+            target="RFC6487" />).  For the purposes of this document,
+            the manifest filename is the final segment of the path of
+            the accessLocation URI from that SIA entry.
+
+        </t>
+
+        <t>
+
+            <xref target="RFC6487" sectionFormat="of"
+            section="4.8.8.1" /> states that a CA may include in its
+            certificate multiple id-ad-rpkiManifest SIA entries.  For
+            comparisons, the RP may use the filename from any one of
+            the id-ad-rpkiManifest SIA entries in the
+            previously-validated CA certificate.  If that filename
+            does not appear in any of the id-ad-rpkiManifest SIA
+            entries in the CA certificate that is currently being
+            validated, then the manifest filename has changed, for the
+            purposes of this section.  The corollary of this behaviour
+            is that a CA that includes multiple id-ad-rpkiManifest SIA
+            entries in its certificate and wants to rely on the
+            behaviour defined in this document MUST ensure that none
+            of the manifest filenames in the previous CA certificate
+            appear in the newly-issued CA certificate.
+
+        </t>
+         
+        <t>
+
+            Note that the approach set out in this section is
+            different from that described in <xref target="RFC8488"
+            sectionFormat="of" section="3.2.1"/>.
+
+        </t>
+
+    </section>
+
+    <section anchor="general-repository-handling" title="General Repository Handling">
+
+        <t>
+
+            The previous section contains a specific update for the
+            handling of manifest numbers, in order to address one
+            potential permanent invalidity scenario.  RPs that
+            encounter other permanent invalidity scenarios SHOULD also
+            consider how those can be addressed such that the scenario
+            does not require the relevant CA or TA to perform a key
+            rollover operation.  For example, in the event that an RP
+            recognises that a permanent invalidity scenario has
+            occurred, the RP could alert the operator and provide an
+            option to the operator to stop relying on cached data for
+            the affected repository, so that the CA can rectify the
+            problem.
+
+        </t>
+
+    </section>
+
+    <section title="Operational Considerations">
+
+        <t>
+
+            CA software may opt to support the manifest number reset
+            functionality in various ways.  For example, it could
+            change the manifest filename when the manifestNumber
+            reaches a certain threshold, or it could alert the
+            operator in this scenario and request confirmation that
+            the filename should be changed.
+
+        </t>
+
+    </section>
+
+    <section anchor="IANA" title="IANA Considerations">
+        <t>
+
+            This document has no actions for IANA.
+
+        </t>
+    </section>
+
+    <section removeInRFC="true">
+      <name>Implementation status</name>
+      <t>
+        This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in <xref target="RFC7942" />.
+        The description of implementations in this section is intended to assist the IETF in its decision processes in progressing drafts to RFCs.
+        Please note that the listing of any individual implementation here does not imply endorsement by the IETF.
+        Furthermore, no effort has been spent to verify the information presented here that was supplied by IETF contributors.
+        This is not intended as, and must not be construed to be, a catalog of available implementations or their features.
+        Readers are advised to note that other implementations may exist.
+      </t>
+      <t>
+        According to <xref target="RFC7942" />, "this will allow reviewers and working groups to assign due consideration to documents that have the benefit of running code, which may serve as evidence of valuable experimentation and feedback that have made the implemented protocols more mature.
+        It is up to the individual working groups to use this information as they see fit".
+      </t>
+
+      <ul>
+        <li>
+          OpenBSD <xref target="rpki-client"/>
+        </li>
+        <li>
+          Routinator <xref target="routinator"/>
+        </li>
+      </ul>
+    </section>
+
+    <section anchor="Acknowledgements" title="Acknowledgements">
+        <t>
+
+            The authors would like to thank <contact fullname="Theo
+            Buehler"/>, <contact fullname="Ben Maddison" />, <contact
+            fullname="Rob Austein" />, <contact fullname="Tim
+            Bruijnzeels" />, and <contact fullname="Russ Housley" />
+            for their review and feedback on this document.
+
+        </t>
+    </section>
+
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      &RFC2119;
+      &RFC4387;
+      &RFC6487;
+      &RFC6488;
+      &RFC8174;
+      &RFC8182;
+      &RFC9286;
+    </references>
+
+    <references title="Informative References">
+      &RFC1982;
+      &RFC5280;
+      &RFC6480;
+      &RFC6481;
+      &RFC6489;
+      &RFC7942;
+      &RFC8630;
+      &RFC8488;
+      &id.draft-ietf-sidrops-rpki-crl-numbers;
+      <reference anchor="rpki-client" target="https://www.rpki-client.org/">
+        <front>
+          <title>rpki-client</title>
+            <author>
+            <organization>OpenBSD Project</organization>
+          </author>
+          <date month="January" year="2024" />
+        </front>
+      </reference>
+      <reference anchor="routinator" target="https://www.nlnetlabs.nl/projects/routing/routinator/">
+        <front>
+          <title>Routinator</title>
+            <author>
+            <organization>NLnet Labs</organization>
+          </author>
+          <date month="June" year="2024" />
+        </front>
+      </reference>
+    </references>
+
+    <section title="Serial Number Arithmetic">
+
+        <t>
+
+            Serial number arithmetic <xref target="RFC1982" /> is an
+            approach that has been used in the DNS context (among
+            others) to permit the indefinite use of a finite number
+            space.  At least in theory, it would be possible to use a
+            similar approach with the manifestNumber field as well.
+
+        </t>
+
+        <t>
+
+            However, unlike the corresponding DNS context with Start
+            of Authority (SOA) resource records, an RPKI CA does not
+            have visibility into or control over RPKI RPs generally.
+            This means that it is not possible to select an updated
+            manifestNumber value or to manage the relevant state
+            transitions so as to guarantee that all RPs will have
+            valid state at the end of the process.  The approach
+            proposed in <xref target="manifest-number-handling" />
+            does not have this problem.
+
+        </t>
+
+    </section>
+
+    <section title="Manifest thisUpdate">
+
+        <t>
+
+            The thisUpdate field in the manifest object is of type
+            GeneralizedTime, defined in <xref target="RFC5280"
+            sectionFormat="of" section="4.1.2.5.2" />.  This type has
+            a maximum value of 99991231235959Z (i.e. 31 December 9999
+            23:59:59 GMT).  <xref target="RFC9286" sectionFormat="of"
+            section="4.2.1" /> requires that "[e]ach RP MUST verify
+            that this field value is greater (more recent) than the
+            most recent manifest it has validated", so it would appear
+            to be subject to the same problem as for manifest numbers.
+            However, during validation, if the RP detects that the
+            current time is not between the manifest thisUpdate and
+            nextUpdate values, the RP must treat the fetch as a failed
+            fetch.  Therefore, the RP will not cache a manifest with a
+            current date far in the future, and the CA can rectify the
+            problem here by reissuing the relevant manifest with the
+            correct date.
+
+        </t>
+
+    </section>
+
+    <section title="Certificate Revocation List Numbers">
+
+        <t>
+
+            Certificate Revocation Lists (CRLs) <xref target="RFC5280"
+            /> are published by RPKI CAs so that RPs can determine the
+            set of certificates that has been revoked by the CA.  CRLs
+            contain a cRLNumber field, which is similar to the
+            manifestNumber field in manifests.  In particular,
+            cRLNumber values are limited to 20 octets in length, and
+            the resource certificate profile for RPKI <xref
+            target="RFC6487" /> states that "[w]here two or more CRLs
+            are issued by the same CA, the CRL with the highest value
+            of the "CRL Number" field supersedes all other CRLs issued
+            by this CA".  As a result, this field raises repository
+            invalidity issues similar to those from the manifest
+            number.  These problems are being addressed by way of
+            <xref target="I-D.ietf-sidrops-rpki-crl-numbers" />.
+
+        </t>
+
+    </section>
+
+    <section anchor="walkthrough">
+      <name>Walkthrough of the rpki-client implementation</name>
+      <t>
+	This section describes the <xref target="rpki-client"/> implementation
+	with regard to handling manifest numbers. The process is composed of
+        multiple stages:
+      </t>
+      <ol>
+        <li>Fetching the manifests and acquiring referenced files</li>
+        <li>Preprocessing of the manifests</li>
+        <li>Selecting the first candidate manifest</li>
+        <li>Matching file names and hashes</li>
+        <li>Optionally selecting the second candidate manifest</li>
+      </ol>
+
+     <section anchor="s1" toc="exclude">
+       <name>Stage: Fetching the Manifests and Acquiring Referenced Files</name>
+       <t>
+	 The RP follows <em>rpkiNotify</em> or <em>caRepository</em> pointers
+	 in the <em>SubjectInfoAccess</em> extension of valid CA certificates
+         to queue up synchronization tasks.
+       </t>
+       <t>
+	 At the end of this stage the RP has zero, one, or two manifests for a
+	 given <em>caRepository</em>. Depending on the validation status, the
+	 RP stores files into two locations: <em>DIR_VALID</em> or
+	 <em>DIR_TEMP</em>. <em>DIR_VALID</em> contains objects which were
+         found to be valid (current, not revoked, not expired) during the previous
+	 validation run, the <em>DIR_TEMP</em> location contains files
+	 retrieved via RRDP or rsync which have not yet been validated, or were
+         rejected by the validation process.
+       </t>
+       <t>
+	 If the remote publication point is unreachable on both RRDP and rsync,
+	 no purported "new" manifest file will be stored in <em>DIR_TEMP</em>.
+	 It is possible that the <em>DIR_VALID</em> location contains a locally
+         cached version of the object from a previous validation run.
+       </t>
+     </section>
+
+     <section anchor="s2" toc="exclude">
+       <name>Stage: preprocessing of the manifests</name>
+       <t>
+	 Constructing the path and filename based on the <em>rpkiManifest</em>
+	 of the CA certificate, the RP attempts to open what purportedly are
+	 two version of the same <em>.mft</em> file in <em>DIR_TEMP</em> and
+         <em>DIR_VALID</em>, respectively.
+       </t>
+       <t>
+	 For brevity's sake, the version in <em>DIR_TEMP</em> is associated
+	 with a data structure named <strong>mft1</strong>, the version in
+         <em>DIR_VALID</em> is associated with a data structure named
+         <strong>mft2</strong>.
+       </t>
+       <t>
+	 Assuming two files exist in the <em>DIR_TEMP</em> and
+	 <em>DIR_VALID</em> locations, both files are run through a series of
+	 checks. If any check fails, that file will be considered ineligible.
+       </t>
+       <ol>
+         <li>Can the file be opened?</li>
+         <li>Can the content of the file be decoded as DER?</li>
+         <li>Can the DER-content be parsed as CMS ContentInfo?</li>
+         <li>Is the CMS self-signage correct?</li>
+         <li>Can exactly one CMS SignerInfo be extracted?</li>
+         <li>Is the ContentInfo of the right version?</li>
+         <li>Is the SignerInfo of the right version?</li>
+         <li>Does the SignerInfo have the correct signed attributes?</li>
+         <li>Does the SignerInfo have the correct digest and signature algorithms?</li>
+         <li>Does the ContentInfo have the right type of embedded content?</li>
+         <li>Does the eContentType match the Content-Type?</li>
+         <li>Does the CMS contain zero CRLs?</li>
+         <li>Can exactly one X.509 cert be extracted from the SignerInfo?</li>
+         <li>Can the notBefore field be extracted from the X.509 cert?</li>
+         <li>Can the notAfter field be extracted from the X.509 cert?</li>
+         <li>Does the X.509 cert's SKI match the SignerInfo's SignerIdentifier?</li>
+         <li>Can the AIA be extracted from the X.509 EE?</li>
+         <li>Can the AKI be extracted from the X.509 EE?</li>
+         <li>Can the SIA be extracted from the X.509 EE?</li>
+         <li>Does the SIA Signed Object pathname match the pathname presented by the publication point?</li>
+         <li>Can the SKI be extracted from the X.509 EE?</li>
+         <li>Are the X509 EE's RFC 3779 extensions set to inherit?</li>
+         <li>Can the eContent be parsed according to the ASN.1 formal syntax?</li>
+         <li>Is the Manifest eContent of the right version?</li>
+         <li>Can the manifestNumber be extracted?</li>
+         <li>Is the CMS signing-time before the Manifest nextUpdate time?</li>
+         <li>Is 'now' not before the Manifest thisUpdate?</li>
+         <li>Is 'now' not after the Manifest nextUpdate?</li>
+         <li>Is the Manifest nextUpdate not before the Manifest thisUpdate?</li>
+         <li>Does a valid certification path from a TA to this EE cert exist?</li>
+       </ol>
+       <t>
+	  Through the above checks, the <strong>mft1</strong> and
+	  <strong>mft2</strong> data structures are populated, or marked
+          ineligible.
+        </t>
+      </section>
+
+      <section anchor="s3" toc="exclude">
+        <name>Stage: selecting the first candidate manifest</name>
+        <t>
+	  Assuming both <strong>mft1</strong> and <strong>mft2</strong>
+	  successfully passed through <xref target="s2">stage 2</xref>, a
+	  comparison can be made between <strong>mft1</strong> and
+          <strong>mft2</strong> to select the candidate mft for the next stage.
+        </t>
+        <t>
+	  The RP checks whether the locally cached version
+	  <strong>mft2</strong> (from <em>DIR_VALID</em>) is older in the sense
+	  that was issued earlier than <strong>mft1</strong> (from
+	  <em>DIR_TEMP</em>) by comparing the Manifest <em>thisUpdate</em>
+	  timestamp, and has a smaller <em>manifestNumber</em>. If both
+	  conditions are true, the RP will select <strong>mft1</strong> as
+          candidate for stage <xref target="s4">stage 4</xref>. 
+        </t>
+        <t>
+	  If there was some kind of issue with <strong>mft1</strong>(such as it
+	  being older than or has the same <em>thisUpdate</em> as
+	  <strong>mft2</strong>, or it having a <em>manifestNumber</em> which
+	  is lower than or equal to <strong>mft2</strong>), the RP proceeds
+          with <xref target="s5">stage 5</xref>.
+        </t>
+      </section>
+
+      <section anchor="s4" toc="exclude">
+        <name>Stage: matching file names and hashes for mft1</name>
+        <t>
+	  The RP will now verify the hash value of each file listed in manifest
+	  <strong>mft1</strong> matches the value obtained by hashing the file
+	  acquired from the publication point. If the computed hash value of a
+	  file listed on the manifest does not match the hash value contained
+	  in the manifest, then a <em>failed fetch</em> occurred and the RP
+          proceeds to <xref target="s5">stage 5</xref>.
+        </t>
+        <t>
+	  If all the files and hashes matched, <strong>mft1</strong> and its
+          associated files are moved from <em>DIR_TEMP</em> to
+          <em>DIR_VALID</em>. The manifest handling procedure now ends.
+        </t>
+      </section>
+
+      <section anchor="s5" toc="exclude">
+        <name>Optional Stage: matching file names and hashes for mft2</name>
+        <t>
+          This stage is only reached if there was an issue with <strong>mft1</strong>.
+        </t>
+        <t>
+	  The RP will now verify the hash value of each file listed in manifest
+	  <strong>mft2</strong> matches the value obtained by hashing the file
+	  acquired from the publication point. If the computed hash value of a
+	  file listed on the manifest does not match the hash value contained
+          in the manifest, then the <em>caRepository</em> is busted.
+        </t>
+      </section>
+
+    </section>
+
+  </back>
+</rfc>
