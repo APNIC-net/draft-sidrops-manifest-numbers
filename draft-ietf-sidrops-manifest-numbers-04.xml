@@ -15,7 +15,7 @@
 <!ENTITY RFC8630 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8630.xml">
 <!ENTITY RFC8488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8488.xml">
 <!ENTITY RFC9286 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9286.xml">
-<!ENTITY id.draft-ietf-sidrops-rpki-crl-numbers SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-sidrops-rpki-crl-numbers-00.xml">
+<!ENTITY id.draft-ietf-sidrops-rpki-crl-numbers SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-sidrops-rpki-crl-numbers-05.xml">
 ]>
 
 <?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
