@@ -359,6 +359,14 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
     </section>
 
+    <section anchor="Security" title="Security Considerations">
+        <t>
+           The RPKI primarily exists to support and improve security of the global Internet routing system.
+           Reliability improvements to the RPKI itself, such as outlined in this document, strengthen its dependability (see <xref target="RFC6480" section="8"/>).
+           This specification does not change RPKI's security characteristics.
+        </t>
+    </section>
+
     <section anchor="IANA" title="IANA Considerations">
         <t>
 
