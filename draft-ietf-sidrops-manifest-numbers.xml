@@ -116,7 +116,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             <xref target="RFC6481" />, and can be used to detect
             certain forms of attack against a repository.  Manifests
             include a "manifest number" (manifestNumber), which the
-            publisher must increment whenever it issues a new
+            publisher must monotonically increment whenever it issues a new
             manifest, and Relying Parties (RPs) are required to verify
             that a newly-retrieved manifest for a given Certification
             Authority (CA) has a higher manifestNumber than the
@@ -174,8 +174,8 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
             These scenarios might also arise in combination and be
             more severe as a result: for example, a large manifest
-            number increment bug in conjunction with a manifest
-            reissuance loop problem.
+            number increment software defect in conjunction with a
+            manifest reissuance loop problem.
 
         </t>
 
