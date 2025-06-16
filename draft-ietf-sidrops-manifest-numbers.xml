@@ -116,7 +116,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             <xref target="RFC6481" />, and can be used to detect
             certain forms of attack against a repository.  Manifests
             include a "manifest number" (manifestNumber), which the
-            publisher must monotonically increment whenever it issues a new
+            publisher must increment by one whenever it issues a new
             manifest, and Relying Parties (RPs) are required to verify
             that a newly-retrieved manifest for a given Certification
             Authority (CA) has a higher manifestNumber than the
@@ -172,10 +172,10 @@ ipr="trust200902" updates="RFC9286" consensus="true">
 
             </list>
 
-            These scenarios might also arise in combination and be
-            more severe as a result: for example, a large manifest
-            number increment software defect in conjunction with a
-            manifest reissuance loop problem.
+            These scenarios might also arise in combination and be more
+            severe as a result.  For example, a CA might increase the
+            manifest number by a large value on reissuance, and also
+            reissue the manifest more frequently than is necessary.
 
         </t>
 
@@ -370,7 +370,6 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             <xref target="RFC9286"/> requires that RPs perform two replay-related checks on newly-retrieved manifests: firstly, that the purported new manifest has a greater manifestNumber than the cached manifest, and secondly, that the purported new manifest has a more recent thisUpdate than the cached manifest.
             An RP that implements the behaviour in Section 2 will momentarily omit the manifestNumber check following a manifest filename change.
             So long as the RP still performs the second check described above, it will be protected against replay attacks.
-            For robustness, issuing CAs are RECOMMENDED to change manifest filename sparingly.
         </t>
     </section>
 
