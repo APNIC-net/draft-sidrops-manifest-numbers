@@ -130,7 +130,7 @@ ipr="trust200902" updates="RFC9286" consensus="true">
             However, the manifestNumber field is 20 octets in length
             (i.e. not unbounded), and no behaviour is specified for
             when a manifestNumber reaches the largest possible value
-            (2^159-1).  When that value is reached, some RP
+            (2<sup>159</sup>-1).  When that value is reached, some RP
             implementations will accept a new manifest for the CA only
             once the current manifest has expired, while others will
             not accept a new manifest at all.  (For the purposes of
