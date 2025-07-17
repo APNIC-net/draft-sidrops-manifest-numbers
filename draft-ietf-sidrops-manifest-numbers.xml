@@ -15,7 +15,6 @@
 <!ENTITY RFC8630 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8630.xml">
 <!ENTITY RFC8488 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8488.xml">
 <!ENTITY RFC9286 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.9286.xml">
-<!ENTITY id.draft-ietf-sidrops-rpki-crl-numbers SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-sidrops-rpki-crl-numbers-05.xml">
 ]>
 
 <?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
@@ -27,7 +26,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
 <rfc category="std"
-docName="draft-ietf-sidrops-manifest-numbers-05"
+docName="draft-ietf-sidrops-manifest-numbers-06"
 ipr="trust200902" updates="9286" consensus="true">
 
   <front>
@@ -88,16 +87,17 @@ ipr="trust200902" updates="9286" consensus="true">
             file that an issuer intends to include within an RPKI
             repository, and can be used to detect certain forms of
             attack against a repository.  Manifests include a
-            "manifest number" (manifestNumber), which the issuer
-            must increment whenever it issues a new manifest, and
-            Relying Parties (RPs) are required to verify that a
+            "manifest number" (manifestNumber), which an issuer must
+            increment whenever it issues a new manifest, and Relying
+            Parties (RPs) are required to verify that a
             newly-retrieved manifest for a given Certification
             Authority (CA) has a higher manifestNumber than the
             previously-validated manifest.  However, the
-            manifestNumber field is 20 octets in length (i.e. bounded),
-            and no behaviour is specified for when a manifestNumber reaches
-            the largest possible value. This document updates RFC9286 by
-            specifying issuer and RP behaviour for this scenario.
+            manifestNumber field is 20 octets in length (i.e.
+            bounded), and no behaviour is specified for when a
+            manifestNumber reaches the largest possible value. This
+            document updates <xref target="RFC9286" /> by specifying
+            issuer and RP behaviour for this scenario.
 
         </t>
     </abstract>
@@ -114,12 +114,12 @@ ipr="trust200902" updates="9286" consensus="true">
             issuer intends to include within an RPKI repository
             <xref target="RFC6481" />, and can be used to detect
             certain forms of attack against a repository.  Manifests
-            include a "manifest number" (manifestNumber), which the
+            include a "manifest number" (manifestNumber), which an
             issuer must increment by one whenever it issues a new
             manifest, and Relying Parties (RPs) are required to verify
             that a newly-retrieved manifest for a given Certification
             Authority (CA) has a higher manifestNumber than the
-            previously-validated manifest (see <xref
+            previously-validated manifest (<xref
             target="RFC9286" sectionFormat="of" section="4.2.1" />).
 
         </t>
@@ -127,7 +127,7 @@ ipr="trust200902" updates="9286" consensus="true">
         <t>
 
             However, the manifestNumber field is 20 octets in length
-            (i.e. not unbounded), and no behaviour is specified for
+            (i.e., bounded), and no behaviour is specified for
             when a manifestNumber reaches the largest possible value
             (2<sup>159</sup>-1).  When that value is reached, some RP
             implementations will accept a new manifest for the CA only
@@ -138,14 +138,14 @@ ipr="trust200902" updates="9286" consensus="true">
 
         <t>
 
-            While it is practically impossible for an issuer to
-            reach the largest possible value under normal operating
+            While it is practically impossible for an issuer to reach
+            the largest possible value under normal operating
             conditions (it would require that the issuer issue one
             manifest per second for 23,171,956,451,847,141,650,870
-            quintillion years), there is a chance that it could be
-            reached due to bugs in the issuance or publication systems
-            or incorrect/inadvertent use of those systems. Examples
-            of misbehaviours are:
+            quintillion years), there is still a chance that it could
+            be reached due to bugs in the issuance or publication
+            systems or incorrect/inadvertent use of those systems.
+            For example:
 
             <ul>
 
@@ -176,7 +176,7 @@ ipr="trust200902" updates="9286" consensus="true">
 
             For a subordinate CA, the risk of repository invalidation
             due to such a problem can be addressed by the issuer
-            using the key rollover process (<xref target="RFC6489" />)
+            using the key rollover process <xref target="RFC6489" />
             to get a new CA certificate.  RPs will treat this new certificate
             as though it represents a distinct CA, and the manifestNumber
             can be reset at that point.
@@ -189,12 +189,12 @@ ipr="trust200902" updates="9286" consensus="true">
             Anchors (TAs).  If a TA publishes a manifest with the
             largest-possible manifestNumber value, then it is
             difficult to rely on the TA after that point, since
-            (described previously) some RPs will not accept a new manifest
+            (as described previously) some RPs will not accept a new manifest
             until the current one has expired, while others will
             reject all new manifests indefinitely.  Particularly in
             the case of TAs, the manifest validity period may be quite
             long, too.  Issuing a new TA and distributing the
-            associated Trust Anchor Locator (TAL, see <xref target="RFC8630"/>)
+            associated Trust Anchor Locator (TAL) <xref target="RFC8630"/>
             to clients would involve a large amount of work for TA operators
             and RPs.  Additionally, depending on the RP implementation being used,
             there would be a limited degree of RPKI protection by way of that TA for
@@ -266,13 +266,13 @@ ipr="trust200902" updates="9286" consensus="true">
 
             <xref target="RFC6481" sectionFormat="of" section="2.2" />
             contains non-normative guidance for the naming of manifest
-            files in repositories.  While a CA that supports the
-            behaviour described in this section cannot preserve the
-            exact filename suggested by that text (per <xref
-            target="RFC4387" sectionFormat="of" section="2.1" />), the
-            CA SHOULD still ensure that the filename is a value
-            derived from the public key of the CA, per the more
-            general guidance in <xref target="RFC4387" section="2.1"/>.
+            files in repositories.  While a CA that supports changing
+            the manifest filename cannot preserve the exact filename
+            suggested by that text (per <xref target="RFC4387"
+            sectionFormat="of" section="2.1" />), the CA SHOULD still
+            ensure that the filename is a value derived from the
+            public key of the CA, per the more general guidance in
+            <xref target="RFC4387" section="2.1"/>.
 
         </t>
 
@@ -308,19 +308,24 @@ ipr="trust200902" updates="9286" consensus="true">
          
         <t>
 
-            The approach set out in this section is
-            different from that described in <xref target="RFC8488"
-            sectionFormat="of" section="3.2.1"/>.
+            <xref target="RFC8488" sectionFormat="of"
+            section="3.2.1"/> describes a manifest selection approach
+            for RPs that involves collecting all unexpired, valid
+            manifests for a CA, and then selecting from that
+            collection the manifest that has the highest
+            manifestNumber.  The approach set out in the current
+            document is different from that approach.
 
         </t>
-
+            
     </section>
 
     <section anchor="general-repository-handling" title="General Repository Handling">
 
         <t>
 
-            The previous section contains a specific update for the
+            <xref target="manifest-number-handling" /> contains a
+            specific update to <xref target="RFC9286" /> for the
             handling of manifest numbers, in order to address one
             potential permanent invalidity scenario.  RPs that
             encounter other permanent invalidity scenarios SHOULD also
@@ -363,6 +368,12 @@ ipr="trust200902" updates="9286" consensus="true">
             <xref target="RFC9286"/> requires that RPs perform two replay-related checks on newly-retrieved manifests: firstly, that the purported new manifest has a greater manifestNumber than the cached manifest, and secondly, that the purported new manifest has a more recent thisUpdate than the cached manifest.
             An RP that implements the behaviour in Section 2 will momentarily omit the manifestNumber check following a manifest filename change.
             So long as the RP still performs the second check described above, it will be protected against replay attacks.
+        </t>
+
+        <t>
+            Although this document updates <xref target="RFC9286"/>,
+            the security considerations from <xref target="RFC9286"/>
+            remain relevant.
         </t>
     </section>
 
@@ -433,7 +444,6 @@ ipr="trust200902" updates="9286" consensus="true">
       &RFC7942;
       &RFC8630;
       &RFC8488;
-      &id.draft-ietf-sidrops-rpki-crl-numbers;
       <reference anchor="rpki-client" target="https://www.rpki-client.org/">
         <front>
           <title>rpki-client</title>
@@ -453,59 +463,6 @@ ipr="trust200902" updates="9286" consensus="true">
         </front>
       </reference>
     </references>
-
-    <section title="Serial Number Arithmetic">
-
-        <t>
-
-            Serial number arithmetic <xref target="RFC1982" /> is an
-            approach that has been used in the DNS context (among
-            others) to permit the indefinite use of a finite number
-            space.  At least in theory, it would be possible to use a
-            similar approach with the manifestNumber field as well.
-
-        </t>
-
-        <t>
-
-            However, unlike the corresponding DNS context with Start
-            of Authority (SOA) resource records, an RPKI CA does not
-            have visibility into or control over RPKI RPs generally.
-            This means that it is not possible to select an updated
-            manifestNumber value or to manage the relevant state
-            transitions so as to guarantee that all RPs will have
-            valid state at the end of the process.  The approach
-            proposed in <xref target="manifest-number-handling" />
-            does not have this problem.
-
-        </t>
-
-    </section>
-
-    <section title="Manifest thisUpdate">
-
-        <t>
-
-            The thisUpdate field in the manifest object is of type
-            GeneralizedTime, defined in <xref target="RFC5280"
-            sectionFormat="of" section="4.1.2.5.2" />.  This type has
-            a maximum value of 99991231235959Z (i.e. 31 December 9999
-            23:59:59 GMT).  <xref target="RFC9286" sectionFormat="of"
-            section="4.2.1" /> requires that "[e]ach RP MUST verify
-            that this field value is greater (more recent) than the
-            most recent manifest it has validated", so it would appear
-            to be subject to the same problem as for manifest numbers.
-            However, during validation, if the RP detects that the
-            current time is not between the manifest thisUpdate and
-            nextUpdate values, the RP must treat the fetch as a failed
-            fetch.  Therefore, the RP will not cache a manifest with a
-            current date far in the future, and the CA can rectify the
-            problem here by reissuing the relevant manifest with the
-            correct date.
-
-        </t>
-
-    </section>
 
   </back>
 </rfc>
