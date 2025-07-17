@@ -243,36 +243,25 @@ ipr="trust200902" updates="9286" consensus="true">
             out in <xref target="RFC9286" sectionFormat="of"
             section="4.2.1" /> would have no purpose.  To avoid this
             outcome, CAs SHOULD NOT use new filenames for manifests
-            except in situations where it is necessary to ensure the
-            ongoing validity of the CA or its repository.  Similarly,
-            RP software SHOULD alert its operators when a manifest
-            filename changes for a given CA.
+            except in situations where such a change is necessary to
+            address the invalidity problem described in this document.
+            Similarly, an RP SHOULD alert its operators when a
+            manifest filename changes for a given CA.
 
         </t>
 
         <t>
 
-            To avoid replay attack, RPs MUST
-            verify that the URI in the accessLocation in one of the
-            id-ad-signedObject accessMethod instances in the manifest's Subject
-            Information Access (SIA) extension exactly matches the URI
-            presented in the RPKI Repository Delta Protocol (RRDP)
-            <xref target="RFC8182" /> "publish" element or the path
-            presented by remote rsync servers.
-
-        </t>
-
-        <t>
-
-            <xref target="RFC6481" sectionFormat="of" section="2.2" />
-            contains non-normative guidance for the naming of manifest
-            files in repositories.  While a CA that supports changing
-            the manifest filename cannot preserve the exact filename
-            suggested by that text (per <xref target="RFC4387"
-            sectionFormat="of" section="2.1" />), the CA SHOULD still
-            ensure that the filename is a value derived from the
-            public key of the CA, per the more general guidance in
-            <xref target="RFC4387" section="2.1"/>.
+            RPs MUST verify that the URI in the accessLocation in one
+            of the id-ad-signedObject accessMethod instances in the
+            manifest's Subject Information Access (SIA) extension
+            exactly matches the URI presented in the RPKI Repository
+            Delta Protocol (RRDP) <xref target="RFC8182" /> "publish"
+            element or the path presented by remote rsync servers.
+            Verifying this match mitigates replay attacks that involve
+            an attacker having control of the underlying repository
+            content without control of the repository distribution
+            mechanism, and vice versa.
 
         </t>
 
@@ -296,7 +285,8 @@ ipr="trust200902" updates="9286" consensus="true">
             previously-validated CA certificate.  If that filename
             does not appear in any of the id-ad-rpkiManifest SIA
             entries in the CA certificate that is currently being
-            validated, then the manifest filename has changed.
+            validated, then the manifest filename has changed for the
+            purposes of this document.
             The corollary of this behaviour
             is that a CA that includes multiple id-ad-rpkiManifest SIA
             entries in its certificate and wants to rely on the
@@ -332,7 +322,7 @@ ipr="trust200902" updates="9286" consensus="true">
             consider how those can be addressed such that the scenario
             does not require the relevant CA or TA to perform a key
             rollover operation.  For example, in the event that an RP
-            recognizes that a permanent invalidity scenario has
+            recognises that a permanent invalidity scenario has
             occurred, the RP could alert the operator and provide an
             option to the operator to stop relying on cached data for
             the affected repository, so that the CA can rectify the
