@@ -3,7 +3,6 @@
 <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
 <!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
-<!ENTITY RFC4387 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4387.xml">
 <!ENTITY RFC5280 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5280.xml">
 <!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
 <!ENTITY RFC6481 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6481.xml">
@@ -417,7 +416,6 @@ ipr="trust200902" updates="9286" consensus="true">
   <back>
     <references title="Normative References">
       &RFC2119;
-      &RFC4387;
       &RFC6487;
       &RFC6488;
       &RFC8174;
