@@ -402,8 +402,10 @@ ipr="trust200902" updates="9286" consensus="true">
             The authors would like to thank <contact fullname="Theo
             Buehler"/>, <contact fullname="Ben Maddison" />, <contact
             fullname="Rob Austein" />, <contact fullname="Tim
-            Bruijnzeels" />, <contact fullname="Russ Housley" />, and <contact fullname="Mohamed Boucadair"/>
-            for their review and feedback on this document.
+            Bruijnzeels" />, <contact fullname="Russ Housley" />,
+            <contact fullname="Mohamed Boucadair"/>, and <contact
+            fullname="Luigi Iannone" /> for their review and feedback
+            on this document.
 
         </t>
     </section>
