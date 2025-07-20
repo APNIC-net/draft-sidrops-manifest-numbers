@@ -251,16 +251,13 @@ ipr="trust200902" updates="9286" consensus="true">
 
         <t>
 
-            RPs MUST verify that the URI in the accessLocation in one
-            of the id-ad-signedObject accessMethod instances in the
+            To avoid certain forms of replay attack, RPs MUST verify
+            that the URI in the accessLocation in one of the
+            id-ad-signedObject accessMethod instances in the
             manifest's Subject Information Access (SIA) extension
             exactly matches the URI presented in the RPKI Repository
             Delta Protocol (RRDP) <xref target="RFC8182" /> "publish"
             element or the path presented by remote rsync servers.
-            Verifying this match mitigates replay attacks that involve
-            an attacker having control of the underlying repository
-            content without control of the repository distribution
-            mechanism, and vice versa.
 
         </t>
 
