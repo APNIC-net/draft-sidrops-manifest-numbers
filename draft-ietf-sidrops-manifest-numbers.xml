@@ -2,8 +2,6 @@
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
 <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
-<!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
-<!ENTITY RFC5280 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5280.xml">
 <!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
 <!ENTITY RFC6481 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6481.xml">
 <!ENTITY RFC6487 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6487.xml">
@@ -25,7 +23,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
 <rfc category="std"
-docName="draft-ietf-sidrops-manifest-numbers-06"
+docName="draft-ietf-sidrops-manifest-numbers-07"
 ipr="trust200902" updates="9286" consensus="true">
 
   <front>
@@ -95,8 +93,8 @@ ipr="trust200902" updates="9286" consensus="true">
             manifestNumber field is 20 octets in length (i.e.
             bounded), and no behaviour is specified for when a
             manifestNumber reaches the largest possible value. This
-            document updates <xref target="RFC9286" /> by specifying
-            issuer and RP behaviour for this scenario.
+            document updates RFC9286 by specifying issuer and RP
+            behaviour for this scenario.
 
         </t>
     </abstract>
@@ -423,8 +421,6 @@ ipr="trust200902" updates="9286" consensus="true">
     </references>
 
     <references title="Informative References">
-      &RFC1982;
-      &RFC5280;
       &RFC6480;
       &RFC6481;
       &RFC6489;
