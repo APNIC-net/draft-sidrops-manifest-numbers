@@ -80,21 +80,11 @@ ipr="trust200902" updates="9286" consensus="true">
         <t>
 
             The Resource Public Key Infrastructure (RPKI) makes use of
-            signed objects called manifests.  A manifest lists each
-            file that an issuer intends to include within an RPKI
-            repository, and can be used to detect certain forms of
-            attack against a repository.  Manifests include a
-            "manifest number" (manifestNumber), which an issuer must
-            increment whenever it issues a new manifest, and Relying
-            Parties (RPs) are required to verify that a
-            newly-retrieved manifest for a given Certification
-            Authority (CA) has a higher manifestNumber than the
-            previously-validated manifest.  However, the
-            manifestNumber field is 20 octets in length (i.e.
-            bounded), and no behaviour is specified for when a
-            manifestNumber reaches the largest possible value. This
-            document updates RFC9286 by specifying issuer and RP
-            behaviour for this scenario.
+            signed objects called manifests, each of which includes a
+            "manifest number".  This document updates RFC9286 by
+            specifying issuer and RP behaviour when a manifest number
+            reaches the largest possible value, a situation not
+            considered in RFC9286.
 
         </t>
     </abstract>
@@ -299,8 +289,8 @@ ipr="trust200902" updates="9286" consensus="true">
             for RPs that involves collecting all unexpired, valid
             manifests for a CA, and then selecting from that
             collection the manifest that has the highest
-            manifestNumber.  The approach set out in the current
-            document is different from that approach.
+            manifestNumber.  The approach set out in this document is
+            different from that approach.
 
         </t>
             
@@ -386,14 +376,28 @@ ipr="trust200902" updates="9286" consensus="true">
         It is up to the individual working groups to use this information as they see fit".
       </t>
 
-      <ul>
-        <li>
-          OpenBSD <xref target="rpki-client"/>
-        </li>
-        <li>
-          Routinator <xref target="routinator"/>
-        </li>
-      </ul>
+      <section anchor="rpki-client" title="rpki-client">
+        <t><list style="none" spacing="compact">
+          <t>Responsible Organization: OpenBSD<vspace blankLines='1' /></t>
+          <t>Location: https://www.rpki-client.org<vspace blankLines='1' /></t>
+          <t>Description: This implementation supports the behaviour described in this document.<vspace blankLines='1' /></t>
+          <t>Level of Maturity: This is a production implementation.<vspace blankLines='1' /></t>
+          <t>Coverage: This implementation includes all of the features described in this specification.<vspace blankLines='1' /></t>
+          <t>Contact Information: Job Snijders, job@sobornost.net</t>
+        </list></t>
+      </section>
+
+      <section anchor="routinator" title="Routinator">
+        <t><list style="none" spacing="compact">
+          <t>Responsible Organization: NLNetLabs<vspace blankLines='1' /></t>
+          <t>Location: https://github.com/NLnetLabs/routinator<vspace blankLines='1' /></t>
+          <t>Description: This implementation supports the behaviour described in this document.<vspace blankLines='1' /></t>
+          <t>Level of Maturity: This is a production implementation.<vspace blankLines='1' /></t>
+          <t>Coverage: This implementation supports the manifest number handling changes described in this specification.<vspace blankLines='1' /></t>
+          <t>Contact Information: NLNetLabs, labs@nlnetlabs.nl</t>
+        </list></t>
+      </section>
+
     </section>
 
     <section anchor="Acknowledgements" title="Acknowledgements">
@@ -405,8 +409,10 @@ ipr="trust200902" updates="9286" consensus="true">
             Bruijnzeels" />, <contact fullname="Russ Housley" />,
             <contact fullname="Mohamed Boucadair"/>, <contact
             fullname="Luigi Iannone" />, <contact fullname="Daniele
-            Ceccarelli" />, and <contact fullname="Darren Dukes" />
-            for their review and feedback on this document.
+            Ceccarelli" />, <contact fullname="Darren Dukes" />,
+            <contact fullname="Barry Leiba" />, and <contact
+            fullname="Éric Vyncke" /> for their review and feedback on
+            this document.
 
         </t>
     </section>
