@@ -234,7 +234,7 @@ ipr="trust200902" updates="9286" consensus="true">
             outcome, CAs SHOULD NOT use new filenames for manifests
             except in situations where such a change is necessary to
             address the invalidity problem described in this document.
-            Similarly, an RP SHOULD alert its operators when a
+            Similarly, an RP MUST alert its operators when a
             manifest filename changes for a given CA.
 
         </t>
@@ -318,7 +318,7 @@ ipr="trust200902" updates="9286" consensus="true">
             specific update to <xref target="RFC9286" /> for the
             handling of manifest numbers, in order to address one
             potential permanent invalidity scenario.  RPs that
-            encounter other permanent invalidity scenarios SHOULD also
+            encounter other permanent invalidity scenarios should also
             consider how those can be addressed such that the scenario
             does not require the relevant CA or TA to perform a key
             rollover operation.  For example, in the event that an RP
