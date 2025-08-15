@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
 <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
 <!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
@@ -241,18 +242,32 @@ ipr="trust200902" updates="9286" consensus="true">
 
         <t>
 
-            To avoid certain forms of replay attack, RPs MUST verify
-            that the URI in the accessLocation in one of the
-            id-ad-signedObject accessMethod instances in the
-            manifest's Subject Information Access (SIA) extension
-            exactly matches the URI presented in the RPKI Repository
-            Delta Protocol (RRDP) <xref target="RFC8182" /> "publish"
-            element or the path presented by remote rsync servers.  If
-            this verification check is unsuccessful, then the fetch
-            has failed, and the RP MUST proceed per <xref
-            target="RFC9286" sectionFormat="of" section="6.6" />.
+            In other contexts, problems like the one described in the
+            introduction have been solved by way of wrapping.  See
+            <xref target="snaa" /> as to why that approach will not
+            work for manifests.
 
         </t>
+
+        <t anchor="replay">
+
+            <xref target="RFC9286"/> requires that RPs perform two
+            replay-related checks on newly-retrieved manifests:
+            firstly, that the purported new manifest has a greater
+            manifestNumber than the cached manifest, and secondly,
+            that the purported new manifest has a more recent
+            thisUpdate than the cached manifest.  An RP that
+            implements the behaviour in this section will momentarily
+            omit the manifestNumber check following a manifest
+            filename change.  So long as the RP still performs the
+            second check described above, it will be protected against
+            replay attacks.
+
+        </t>
+
+    </section>
+
+    <section anchor="manifest-filenames" title="Manifest Filenames">
 
         <t>
 
@@ -295,6 +310,29 @@ ipr="trust200902" updates="9286" consensus="true">
             not reset its stored manifestNumber for the CA. 
 
         </t>
+
+    </section>
+
+    <section anchor="manifest-sia-check" title="Manifest SIA Verification">
+
+        <t>
+
+            To avoid certain forms of replay attack, RPs MUST verify
+            that the URI in the accessLocation in one of the
+            id-ad-signedObject accessMethod instances in the
+            manifest's Subject Information Access (SIA) extension
+            exactly matches the URI presented in the RPKI Repository
+            Delta Protocol (RRDP) <xref target="RFC8182" /> "publish"
+            element or the path presented by remote rsync servers.  If
+            this verification check is unsuccessful, then the fetch
+            has failed, and the RP MUST proceed per <xref
+            target="RFC9286" sectionFormat="of" section="6.6" />.
+
+        </t>
+
+    </section>
+
+    <section anchor="rfc8488" title="RFC8488 Comparison">
          
         <t>
 
@@ -348,23 +386,26 @@ ipr="trust200902" updates="9286" consensus="true">
     </section>
 
     <section anchor="Security" title="Security Considerations">
+
         <t>
-            The RPKI primarily exists to support and improve security of the global Internet routing system.
-        </t>
-        <t>
-            Reliability improvements to the RPKI itself, such as outlined in this document, strengthen its dependability (see <xref target="RFC6480" section="8"/>).
-        </t>
-        <t>
-            <xref target="RFC9286"/> requires that RPs perform two replay-related checks on newly-retrieved manifests: firstly, that the purported new manifest has a greater manifestNumber than the cached manifest, and secondly, that the purported new manifest has a more recent thisUpdate than the cached manifest.
-            An RP that implements the behaviour in Section 2 will momentarily omit the manifestNumber check following a manifest filename change.
-            So long as the RP still performs the second check described above, it will be protected against replay attacks.
+
+            See <xref target="replay" /> regarding the effect of
+            skipping the manifestNumber check with respect to replay
+            attacks.  To protect against replay attacks in the absence
+            of this check, RPs should ensure that they are verifying
+            the thisUpdate value per the requirements of <xref
+            target="RFC9286"/>.
+
         </t>
 
         <t>
+
             Although this document updates <xref target="RFC9286"/>,
             the security considerations from <xref target="RFC9286"/>
             remain relevant.
+
         </t>
+
     </section>
 
     <section anchor="IANA" title="IANA Considerations">
@@ -445,6 +486,7 @@ ipr="trust200902" updates="9286" consensus="true">
     </references>
 
     <references title="Informative References">
+      &RFC1982;
       &RFC6480;
       &RFC6481;
       &RFC6489;
@@ -452,6 +494,34 @@ ipr="trust200902" updates="9286" consensus="true">
       &RFC8630;
       &RFC8488;
     </references>
+
+    <section anchor="snaa" title="Serial Number Arithmetic Approach">
+
+        <t>
+
+            Serial number arithmetic <xref target="RFC1982" /> is an
+            approach that has been used in the DNS context (among
+            others) to permit the indefinite use of a finite number
+            space.  At least in theory, it would be possible to use a
+            similar approach with the manifestNumber field as well.
+
+        </t>
+
+        <t>
+
+            However, unlike the corresponding DNS context with Start
+            of Authority (SOA) resource records, an RPKI CA does not
+            have visibility into or control over RPKI RPs generally.
+            This means that it is not possible to select an updated
+            manifestNumber value or to manage the relevant state
+            transitions so as to guarantee that all RPs will have
+            valid state at the end of the process.  The approach
+            proposed in <xref target="manifest-number-handling" />
+            does not have this problem.
+
+        </t>
+
+    </section>
 
   </back>
 </rfc>
