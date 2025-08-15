@@ -425,9 +425,9 @@ ipr="trust200902" updates="9286" consensus="true">
             fullname="Luigi Iannone" />, <contact fullname="Daniele
             Ceccarelli" />, <contact fullname="Darren Dukes" />,
             <contact fullname="Barry Leiba" />, <contact
-            fullname="Éric Vyncke" />, and <contact fullname="Gorry
-            Fairhurst" /> for their review and feedback on this
-            document.
+            fullname="Éric Vyncke" />, <contact fullname="Gorry
+            Fairhurst" />, and <contact fullname="Andy Newton" /> for
+            their review and feedback on this document.
 
         </t>
     </section>
