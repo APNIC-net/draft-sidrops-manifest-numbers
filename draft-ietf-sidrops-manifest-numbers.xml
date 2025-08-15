@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
-<!ENTITY RFC1982 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1982.xml">
 <!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
 <!ENTITY RFC6480 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6480.xml">
@@ -242,14 +241,6 @@ ipr="trust200902" updates="9286" consensus="true">
 
         <t>
 
-            Regarding the potential reuse of the number space by way
-            of wrapping, see <xref target="sna" /> as to why that
-            approach will not work for manifests.
-
-        </t>
-
-        <t>
-
             To avoid certain forms of replay attack, RPs MUST verify
             that the URI in the accessLocation in one of the
             id-ad-signedObject accessMethod instances in the
@@ -260,14 +251,6 @@ ipr="trust200902" updates="9286" consensus="true">
             this verification check is unsuccessful, then the fetch
             has failed, and the RP MUST proceed per <xref
             target="RFC9286" sectionFormat="of" section="6.6" />.
-
-        </t>
-
-        <t>
-
-            Regarding the effect on replay attacks of the omission of
-            the manifestNumber check per this section, see <xref
-            target="Security" />.
 
         </t>
 
@@ -462,7 +445,6 @@ ipr="trust200902" updates="9286" consensus="true">
     </references>
 
     <references title="Informative References">
-      &RFC1982;
       &RFC6480;
       &RFC6481;
       &RFC6489;
@@ -470,34 +452,6 @@ ipr="trust200902" updates="9286" consensus="true">
       &RFC8630;
       &RFC8488;
     </references>
-
-    <section anchor="sna" title="Serial Number Arithmetic">
-
-        <t>
-
-            Serial number arithmetic <xref target="RFC1982" /> is an
-            approach that has been used in the DNS context (among
-            others) to permit the indefinite use of a finite number
-            space.  At least in theory, it would be possible to use a
-            similar approach with the manifestNumber field as well.
-
-        </t>
-
-        <t>
-
-            However, unlike the corresponding DNS context with Start
-            of Authority (SOA) resource records, an RPKI CA does not
-            have visibility into or control over RPKI RPs generally.
-            This means that it is not possible to select an updated
-            manifestNumber value or to manage the relevant state
-            transitions so as to guarantee that all RPs will have
-            valid state at the end of the process.  The approach
-            proposed in <xref target="manifest-number-handling" />
-            does not have this problem.
-
-        </t>
-
-    </section>
 
   </back>
 </rfc>
