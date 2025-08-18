@@ -240,15 +240,6 @@ ipr="trust200902" updates="9286" consensus="true">
 
         </t>
 
-        <t>
-
-            In other contexts, problems like the one described in the
-            introduction have been solved by way of wrapping.  See
-            <xref target="snaa" /> as to why that approach will not
-            work for manifests.
-
-        </t>
-
         <t anchor="replay">
 
             <xref target="RFC9286"/> requires that RPs perform two
@@ -389,12 +380,30 @@ ipr="trust200902" updates="9286" consensus="true">
 
         <t>
 
+            The RPKI primarily exists to support and improve security
+            of the global Internet routing system.  Reliability
+            improvements to the RPKI itself, such as outlined in this
+            document, strengthen its dependability (see <xref
+            target="RFC6480" section="8" />).
+
+        </t>
+
+        <t>
+
             See <xref target="replay" /> regarding the effect of
             skipping the manifestNumber check with respect to replay
             attacks.  To protect against replay attacks in the absence
             of this check, RPs should ensure that they are verifying
             the thisUpdate value per the requirements of <xref
             target="RFC9286"/>.
+
+        </t>
+
+        <t>
+
+            <xref target="manifest-sia-check" /> describes an
+            additional protection against certain forms of replay
+            attack.
 
         </t>
 
@@ -494,34 +503,6 @@ ipr="trust200902" updates="9286" consensus="true">
       &RFC8630;
       &RFC8488;
     </references>
-
-    <section anchor="snaa" title="Serial Number Arithmetic Approach">
-
-        <t>
-
-            Serial number arithmetic <xref target="RFC1982" /> is an
-            approach that has been used in the DNS context (among
-            others) to permit the indefinite use of a finite number
-            space.  At least in theory, it would be possible to use a
-            similar approach with the manifestNumber field as well.
-
-        </t>
-
-        <t>
-
-            However, unlike the corresponding DNS context with Start
-            of Authority (SOA) resource records, an RPKI CA does not
-            have visibility into or control over RPKI RPs generally.
-            This means that it is not possible to select an updated
-            manifestNumber value or to manage the relevant state
-            transitions so as to guarantee that all RPs will have
-            valid state at the end of the process.  The approach
-            proposed in <xref target="manifest-number-handling" />
-            does not have this problem.
-
-        </t>
-
-    </section>
 
   </back>
 </rfc>

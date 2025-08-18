@@ -6,7 +6,7 @@ Internet Engineering Task Force                              T. Harrison
 Internet-Draft                                             G. Michaelson
 Updates: 9286 (if approved)                                        APNIC
 Intended status: Standards Track                             J. Snijders
-Expires: 16 February 2026                                 15 August 2025
+Expires: 20 February 2026                                 19 August 2025
 
 
    Resource Public Key Infrastructure (RPKI) Manifest Number Handling
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 16 February 2026.
+   This Internet-Draft will expire on 20 February 2026.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Harrison, et al.        Expires 16 February 2026                [Page 1]
+Harrison, et al.        Expires 20 February 2026                [Page 1]
 
 Internet-Draft        RPKI Manifest Number Handling          August 2025
 
@@ -61,13 +61,13 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
-     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   4
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   3
    2.  Manifest Number Handling  . . . . . . . . . . . . . . . . . .   4
    3.  Manifest Filenames  . . . . . . . . . . . . . . . . . . . . .   4
    4.  Manifest SIA Verification . . . . . . . . . . . . . . . . . .   5
    5.  RFC8488 Comparison  . . . . . . . . . . . . . . . . . . . . .   5
    6.  General Repository Handling . . . . . . . . . . . . . . . . .   5
-   7.  Operational Considerations  . . . . . . . . . . . . . . . . .   6
+   7.  Operational Considerations  . . . . . . . . . . . . . . . . .   5
    8.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
    9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    10. Implementation status . . . . . . . . . . . . . . . . . . . .   6
@@ -77,7 +77,6 @@ Table of Contents
    12. References  . . . . . . . . . . . . . . . . . . . . . . . . .   7
      12.1.  Normative References . . . . . . . . . . . . . . . . . .   7
      12.2.  Informative References . . . . . . . . . . . . . . . . .   8
-   Appendix A.  Serial Number Arithmetic Approach  . . . . . . . . .   9
    Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   9
 
 1.  Introduction
@@ -100,20 +99,6 @@ Table of Contents
    CA only once the current manifest has expired, while others will not
    accept a new manifest at all.
 
-
-
-
-
-
-
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 2]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
    While it is practically impossible for an issuer to reach the largest
    possible value under normal operating conditions (it would require
    that the issuer issue one manifest per second for
@@ -121,6 +106,13 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    chance that it could be reached due to bugs in the issuance or
    publication systems or incorrect/inadvertent use of those systems.
    For example:
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 2]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
 
    *  Incrementing by large values when issuing manifests, such that the
       time to reach that largest value is reduced.
@@ -162,14 +154,6 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    defining how issuers and RPs can handle this scenario in order to
    facilitate ongoing use of an affected repository.
 
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 3]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
 1.1.  Requirements Language
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -177,6 +161,14 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    "OPTIONAL" in this document are to be interpreted as described in BCP
    14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
+
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 3]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
 
 2.  Manifest Number Handling
 
@@ -198,10 +190,6 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    document.  Similarly, an RP MUST alert its operators when a manifest
    filename changes for a given CA.
 
-   In other contexts, problems like the one described in the
-   introduction have been solved by way of wrapping.  See Appendix A as
-   to why that approach will not work for manifests.
-
    [RFC9286] requires that RPs perform two replay-related checks on
    newly-retrieved manifests: firstly, that the purported new manifest
    has a greater manifestNumber than the cached manifest, and secondly,
@@ -218,14 +206,6 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    For the purposes of this document, the manifest filename is the final
    segment of the path of the accessLocation URI from that SIA entry.
 
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 4]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
    Section 4.8.8.1 of [RFC6487] states that a CA may include in its
    certificate multiple id-ad-rpkiManifest SIA entries.  For
    comparisons, an RP may use the filename from any one of the id-ad-
@@ -238,6 +218,14 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    that a CA that includes multiple id-ad-rpkiManifest SIA entries in
    its certificate and wants to rely on the behaviour defined in this
    document MUST ensure that none of the manifest filenames in the
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 4]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
+
    previous CA certificate appear in the newly-issued CA certificate.
    If one of the manifest filenames from the previous CA certificate
    appears in the newly-issued CA certificate, then an RP that is using
@@ -274,14 +262,6 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    rollover operation.  For example, in the event that an RP recognises
    that a permanent invalidity scenario has occurred, the RP could alert
    the operator and provide an option to the operator to stop relying on
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 5]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
    cached data for the affected repository, so that the CA can rectify
    the problem.
 
@@ -293,13 +273,30 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    threshold, or it could alert the operator in this scenario and
    request confirmation that the filename should be changed.
 
+
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 5]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
+
 8.  Security Considerations
 
-   See Section 2, Paragraph 4 regarding the effect of skipping the
+   The RPKI primarily exists to support and improve security of the
+   global Internet routing system.  Reliability improvements to the RPKI
+   itself, such as outlined in this document, strengthen its
+   dependability (see Section 8 of [RFC6480]).
+
+   See Section 2, Paragraph 3 regarding the effect of skipping the
    manifestNumber check with respect to replay attacks.  To protect
    against replay attacks in the absence of this check, RPs should
    ensure that they are verifying the thisUpdate value per the
    requirements of [RFC9286].
+
+   Section 4 describes an additional protection against certain forms of
+   replay attack.
 
    Although this document updates [RFC9286], the security considerations
    from [RFC9286] remain relevant.
@@ -325,25 +322,21 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
    features.  Readers are advised to note that other implementations may
    exist.
 
-
-
-
-
-
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 6]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
    According to [RFC7942], "this will allow reviewers and working groups
    to assign due consideration to documents that have the benefit of
    running code, which may serve as evidence of valuable experimentation
    and feedback that have made the implemented protocols more mature.
    It is up to the individual working groups to use this information as
    they see fit".
+
+
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 6]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
 
 10.1.  rpki-client
 
@@ -384,16 +377,6 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
 
-
-
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 7]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
    [RFC6487]  Huston, G., Michaelson, G., and R. Loomans, "A Profile for
               X.509 PKIX Resource Certificates", RFC 6487,
               DOI 10.17487/RFC6487, February 2012,
@@ -403,6 +386,13 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
               Template for the Resource Public Key Infrastructure
               (RPKI)", RFC 6488, DOI 10.17487/RFC6488, February 2012,
               <https://www.rfc-editor.org/info/rfc6488>.
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 7]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
@@ -439,17 +429,6 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
               DOI 10.17487/RFC6489, February 2012,
               <https://www.rfc-editor.org/info/rfc6489>.
 
-
-
-
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 8]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
-
-
    [RFC7942]  Sheffer, Y. and A. Farrel, "Improving Awareness of Running
               Code: The Implementation Status Section", BCP 205,
               RFC 7942, DOI 10.17487/RFC7942, July 2016,
@@ -461,25 +440,20 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
               DOI 10.17487/RFC8488, December 2018,
               <https://www.rfc-editor.org/info/rfc8488>.
 
+
+
+
+
+
+Harrison, et al.        Expires 20 February 2026                [Page 8]
+
+Internet-Draft        RPKI Manifest Number Handling          August 2025
+
+
    [RFC8630]  Huston, G., Weiler, S., Michaelson, G., Kent, S., and T.
               Bruijnzeels, "Resource Public Key Infrastructure (RPKI)
               Trust Anchor Locator", RFC 8630, DOI 10.17487/RFC8630,
               August 2019, <https://www.rfc-editor.org/info/rfc8630>.
-
-Appendix A.  Serial Number Arithmetic Approach
-
-   Serial number arithmetic [RFC1982] is an approach that has been used
-   in the DNS context (among others) to permit the indefinite use of a
-   finite number space.  At least in theory, it would be possible to use
-   a similar approach with the manifestNumber field as well.
-
-   However, unlike the corresponding DNS context with Start of Authority
-   (SOA) resource records, an RPKI CA does not have visibility into or
-   control over RPKI RPs generally.  This means that it is not possible
-   to select an updated manifestNumber value or to manage the relevant
-   state transitions so as to guarantee that all RPs will have valid
-   state at the end of the process.  The approach proposed in Section 2
-   does not have this problem.
 
 Authors' Addresses
 
@@ -497,13 +471,6 @@ Authors' Addresses
    South Brisbane QLD 4101
    Australia
    Email: ggm@apnic.net
-
-
-
-
-Harrison, et al.        Expires 16 February 2026                [Page 9]
-
-Internet-Draft        RPKI Manifest Number Handling          August 2025
 
 
    Job Snijders
@@ -534,27 +501,4 @@ Internet-Draft        RPKI Manifest Number Handling          August 2025
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Harrison, et al.        Expires 16 February 2026               [Page 10]
+Harrison, et al.        Expires 20 February 2026                [Page 9]
